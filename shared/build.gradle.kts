@@ -39,12 +39,23 @@ kotlin {
 
 android {
     namespace = "ru.lemonapes.easyprog"
-    compileSdk = 34
+    compileSdk = 35
     defaultConfig {
         minSdk = 24
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    buildTypes {
+        getByName("debug") {
+            buildConfigField("boolean", "DEBUG", "true")
+        }
+        getByName("release") {
+            buildConfigField("boolean", "DEBUG", "false")
+        }
+    }
+    buildFeatures {
+        buildConfig = true
     }
 }

@@ -6,11 +6,11 @@ plugins {
 
 android {
     namespace = "ru.lemonapes.easyprog.android"
-    compileSdk = 34
+    compileSdk = 35
     defaultConfig {
         applicationId = "ru.lemonapes.easyprog.android"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
     }
