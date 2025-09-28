@@ -1,7 +1,6 @@
 package ru.lemonapes.easyprog.android
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
@@ -22,12 +21,14 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import ru.lemonapes.easyprog.Utils.Companion.log
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 data class ListItem(
     val id: Int,
     val text: String,
-    var y: Float = 0f
+    val y: Float = 0f,
 )
 
 class MainActivity : ComponentActivity() {
@@ -46,6 +47,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+const val itemHeight = 80f
+const val itemPadding = 10f
+
 //@OptIn(InternalComposeApi::class)
 @Composable
 fun DragAndDropCanvas() {
@@ -59,12 +63,9 @@ fun DragAndDropCanvas() {
     //val composer = currentComposer
     val textMeasurer = rememberTextMeasurer()
 
-    val itemHeight = 80f
-    val itemPadding = 10f
-
     LaunchedEffect(items) {
-        items.forEachIndexed { index, item ->
-            item.y = index * (itemHeight + itemPadding)
+        items = items.mapIndexed { index, item ->
+            item.copy(y = index * (itemHeight + itemPadding))
         }
     }
 
@@ -87,7 +88,8 @@ fun DragAndDropCanvas() {
                     onDragEnd = {
                         draggedItem?.let { dragged ->
                             val targetY = dragged.y + dragOffset.y
-                            val targetIndex = (targetY / (itemHeight + itemPadding)).roundToInt()
+                            val targetIndex = (targetY / (itemHeight + itemPadding))
+                                .roundToInt()
                                 .coerceIn(0, items.size - 1)
 
                             val currentIndex = items.indexOf(dragged)
@@ -95,10 +97,9 @@ fun DragAndDropCanvas() {
                                 val newItems = items.toMutableList()
                                 newItems.removeAt(currentIndex)
                                 newItems.add(targetIndex, dragged)
-                                newItems.forEachIndexed { index, item ->
-                                    item.y = index * (itemHeight + itemPadding)
+                                items = newItems.mapIndexed { index, item ->
+                                    item.copy(y = index * (itemHeight + itemPadding))
                                 }
-                                items = newItems
                             }
                         }
                         draggedItem = null
@@ -107,22 +108,70 @@ fun DragAndDropCanvas() {
                 )
             }
     ) {
-        drawDragAndDropList(items, draggedItem, dragOffset, textMeasurer, itemHeight)
+        drawDragAndDropList(items, draggedItem, dragOffset, textMeasurer)
     }
 }
 
 fun DrawScope.drawDragAndDropList(
-    items:  List<ListItem>,
+    items: List<ListItem>,
     draggedItem: ListItem?,
     dragOffset: Offset,
     textMeasurer: androidx.compose.ui.text.TextMeasurer,
-    itemHeight: Float
 ) {
-    log("drawDragAndDropList $items")
-    items.forEach { item ->
-        log("drawDragAndDropList forEach $item")
+    // Рассчитываем смещения для всех элементов
+    val itemOffsets = items.mapIndexed { index, item ->
         val isDragged = item == draggedItem
-        val itemY = if (isDragged) item.y + dragOffset.y else item.y
+        when {
+            isDragged -> {
+                // Перетаскиваемый элемент - используем его оригинальную позицию + dragOffset
+                item.y + dragOffset.y
+            }
+
+            draggedItem != null -> {
+                // Не перетаскиваемые элементы - рассчитываем их смещение
+                val draggedCurrentY = draggedItem.y + dragOffset.y
+                val draggedOriginalIndex = items.indexOf(draggedItem)
+                val posFullHeight = itemHeight + itemPadding
+                val draggedCurrentFullPosScrolled = (dragOffset.y / posFullHeight).toInt()
+
+                // Определяем куда должен попасть перетаскиваемый элемент
+                val targetIndex = (draggedCurrentY / (posFullHeight)).roundToInt()
+                    .coerceIn(0, items.size - 1)
+
+                val draggedCurrentIndex = draggedOriginalIndex + draggedCurrentFullPosScrolled
+
+                when {
+                    //Перетаскиваемый элемент движется вниз
+                    dragOffset.y > 0 &&
+                            index > draggedOriginalIndex &&
+                            index <= (draggedCurrentIndex + 1) -> {
+                        max(
+                            item.y - dragOffset.y + posFullHeight * (index - draggedOriginalIndex - 1),
+                            item.y - posFullHeight
+                        )
+                    }
+
+                    //Перетаскиваемый элемент движется вeрх
+                    dragOffset.y < 0 &&
+                            index < draggedOriginalIndex &&
+                            index >= (draggedCurrentIndex - 1) -> {
+                        min(
+                            item.y - dragOffset.y - posFullHeight * (draggedOriginalIndex - index - 1),
+                            item.y + posFullHeight
+                        )
+                    }
+
+                    else -> item.y
+                }
+            }
+
+            else -> item.y
+        }
+    }
+
+    items.forEachIndexed { index, item ->
+        val isDragged = item == draggedItem
+        val itemY = itemOffsets[index]
         val alpha = if (isDragged) 0.7f else 1f
 
         drawRect(
@@ -130,13 +179,6 @@ fun DrawScope.drawDragAndDropList(
             topLeft = Offset(20f, itemY),
             size = Size(size.width - 40f, itemHeight),
             alpha = alpha
-        )
-
-        drawRect(
-            color = Color.Gray,
-            topLeft = Offset(20f, itemY),
-            size = Size(size.width - 40f, itemHeight),
-            alpha = alpha * 0.3f
         )
 
         val textResult = textMeasurer.measure(
