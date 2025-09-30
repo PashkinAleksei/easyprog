@@ -14,6 +14,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -49,6 +50,7 @@ class MainActivity : ComponentActivity() {
 
 const val itemHeight = 80f
 const val itemPadding = 10f
+const val posFullHeight = itemHeight + itemPadding
 
 //@OptIn(InternalComposeApi::class)
 @Composable
@@ -65,7 +67,7 @@ fun DragAndDropCanvas() {
 
     LaunchedEffect(items) {
         items = items.mapIndexed { index, item ->
-            item.copy(y = index * (itemHeight + itemPadding))
+            item.copy(y = index * posFullHeight)
         }
     }
 
@@ -88,7 +90,7 @@ fun DragAndDropCanvas() {
                     onDragEnd = {
                         draggedItem?.let { dragged ->
                             val targetY = dragged.y + dragOffset.y
-                            val targetIndex = (targetY / (itemHeight + itemPadding))
+                            val targetIndex = (targetY / posFullHeight)
                                 .roundToInt()
                                 .coerceIn(0, items.size - 1)
 
@@ -98,16 +100,18 @@ fun DragAndDropCanvas() {
                                 newItems.removeAt(currentIndex)
                                 newItems.add(targetIndex, dragged)
                                 items = newItems.mapIndexed { index, item ->
-                                    item.copy(y = index * (itemHeight + itemPadding))
+                                    item.copy(y = index * posFullHeight)
                                 }
                             }
+                            dragOffset = Offset.Zero
+                            draggedItem = null
                         }
-                        draggedItem = null
-                        dragOffset = Offset.Zero
                     }
                 )
             }
     ) {
+        log(draggedItem)
+        log(dragOffset)
         drawDragAndDropList(items, draggedItem, dragOffset, textMeasurer)
     }
 }
@@ -116,22 +120,23 @@ fun DrawScope.drawDragAndDropList(
     items: List<ListItem>,
     draggedItem: ListItem?,
     dragOffset: Offset,
-    textMeasurer: androidx.compose.ui.text.TextMeasurer,
+    textMeasurer: TextMeasurer,
 ) {
+    var draggedOffset: Float = draggedItem?.y ?: 0f
     // Рассчитываем смещения для всех элементов
-    val itemOffsets = items.mapIndexed { index, item ->
+    val itemOffsets: List<Float> = items.mapIndexed { index, item ->
         val isDragged = item == draggedItem
         when {
             isDragged -> {
                 // Перетаскиваемый элемент - используем его оригинальную позицию + dragOffset
-                item.y + dragOffset.y
+                draggedOffset = item.y + dragOffset.y
+                draggedOffset
             }
 
             draggedItem != null -> {
                 // Не перетаскиваемые элементы - рассчитываем их смещение
                 val draggedCurrentY = draggedItem.y + dragOffset.y
                 val draggedOriginalIndex = items.indexOf(draggedItem)
-                val posFullHeight = itemHeight + itemPadding
                 val draggedCurrentFullPosScrolled = (dragOffset.y / posFullHeight).toInt()
 
                 // Определяем куда должен попасть перетаскиваемый элемент
@@ -171,33 +176,43 @@ fun DrawScope.drawDragAndDropList(
 
     items.forEachIndexed { index, item ->
         val isDragged = item == draggedItem
-        val itemY = itemOffsets[index]
-        val alpha = if (isDragged) 0.7f else 1f
+        val itemOffset = itemOffsets[index]
 
-        drawRect(
-            color = if (isDragged) Color.LightGray else Color.White,
-            topLeft = Offset(20f, itemY),
-            size = Size(size.width - 40f, itemHeight),
-            alpha = alpha
-        )
-
-        val textResult = textMeasurer.measure(
-            text = item.text,
-            style = TextStyle(
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
-            )
-        )
-
-        drawText(
-            textLayoutResult = textResult,
-            topLeft = Offset(
-                40f,
-                itemY + (itemHeight - textResult.size.height) / 2
-            ),
-            alpha = alpha
-        )
+        if (!isDragged) {
+            itemView(false, textMeasurer, itemOffset, item)
+        }
     }
+
+    draggedItem?.let { item ->
+        itemView(true, textMeasurer, draggedOffset, item)
+    }
+}
+
+private fun DrawScope.itemView(isDragged: Boolean, textMeasurer: TextMeasurer, itemOffset: Float, item: ListItem) {
+    val alpha = if (isDragged) 0.7f else 1f
+    drawRect(
+        color = if (isDragged) Color.LightGray else Color.White,
+        topLeft = Offset(20f, itemOffset),
+        size = Size(size.width - 40f, itemHeight),
+        alpha = alpha
+    )
+
+    val textResult = textMeasurer.measure(
+        text = item.text,
+        style = TextStyle(
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium
+        )
+    )
+
+    drawText(
+        textLayoutResult = textResult,
+        topLeft = Offset(
+            40f,
+            itemOffset + (itemHeight - textResult.size.height) / 2
+        ),
+        alpha = alpha
+    )
 }
 
 @Preview
