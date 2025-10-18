@@ -1,30 +1,56 @@
 package ru.lemonapes.easyprog.android
 
+import android.content.ClipData
+import android.content.ClipDescription
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.draganddrop.dragAndDropSource
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draganddrop.DragAndDropTransferData
+import androidx.compose.ui.draganddrop.mimeTypes
+import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.TextMeasurer
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import ru.lemonapes.easyprog.Utils.Companion.log
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.roundToInt
 
 data class ListItem(
     val id: Int,
@@ -37,188 +63,323 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MyApplicationTheme {
+                val isHovered = remember { mutableStateOf(false) }
+                val itemIndexHovered: MutableState<Int?> = remember { mutableStateOf(null) }
+
+                val globalDragAndDropTarget = remember {
+                    createGlobalDragAndDropTarget(
+                        isHovered = isHovered,
+                        itemIndexHovered = itemIndexHovered,
+                    )
+                }
+
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .dragAndDropTargetIfNeed(true, globalDragAndDropTarget),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    DragAndDropCanvas()
+                    DragDropExample(
+                        isHovered = isHovered,
+                        itemIndexHovered = itemIndexHovered,
+                    )
                 }
             }
         }
     }
 }
 
-const val itemHeight = 80f
-const val itemPadding = 10f
-const val posFullHeight = itemHeight + itemPadding
+sealed interface ColumnItem
+private data object EmptyItem : ColumnItem
+private data class TextItem(val text: String) : ColumnItem
 
-//@OptIn(InternalComposeApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun DragAndDropCanvas() {
-    var items by remember {
-        mutableStateOf(
-            (1..10).map { ListItem(it, "Item $it") }
-        )
+fun DragDropExample(
+    isHovered: MutableState<Boolean>,
+    itemIndexHovered: MutableState<Int?>,
+) {
+    log("${itemIndexHovered.value}")
+    val sourceItems = listOf(
+        TextItem("Элемент 1"), TextItem("Элемент 2"),
+        TextItem("Элемент 3"), TextItem("Элемент 4"),
+        TextItem("Элемент 5"), TextItem("Элемент 6"),
+        TextItem("Элемент 7"), TextItem("Элемент 8"),
+        TextItem("Элемент 9"), TextItem("Элемент 10"),
+    )
+    val columnItems = remember {
+        mutableStateListOf<ColumnItem>(EmptyItem)
     }
-    var draggedItem by remember { mutableStateOf<ListItem?>(null) }
-    var dragOffset by remember { mutableStateOf(Offset.Zero) }
-    //val composer = currentComposer
-    val textMeasurer = rememberTextMeasurer()
 
-    LaunchedEffect(items) {
-        items = items.mapIndexed { index, item ->
-            item.copy(y = index * posFullHeight)
-        }
-    }
-
-
-    Canvas(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = { offset ->
-                        val clickedItem = items.find { item ->
-                            offset.y >= item.y && offset.y <= item.y + itemHeight
-                        }
-                        draggedItem = clickedItem
-                        dragOffset = Offset.Zero
-                    },
-                    onDrag = { change, _ ->
-                        dragOffset += change.position - change.previousPosition
-                    },
-                    onDragEnd = {
-                        draggedItem?.let { dragged ->
-                            val targetY = dragged.y + dragOffset.y
-                            val targetIndex = (targetY / posFullHeight)
-                                .roundToInt()
-                                .coerceIn(0, items.size - 1)
-
-                            val currentIndex = items.indexOf(dragged)
-                            if (targetIndex != currentIndex) {
-                                val newItems = items.toMutableList()
-                                newItems.removeAt(currentIndex)
-                                newItems.add(targetIndex, dragged)
-                                items = newItems.mapIndexed { index, item ->
-                                    item.copy(y = index * posFullHeight)
-                                }
-                            }
-                            dragOffset = Offset.Zero
-                            draggedItem = null
-                        }
-                    }
-                )
-            }
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        log(draggedItem)
-        log(dragOffset)
-        drawDragAndDropList(items, draggedItem, dragOffset, textMeasurer)
-    }
-}
+        // Row с исходными элементами
+        Text(
+            "Row - Горизонтальный список",
+            style = MaterialTheme.typography.titleLarge
+        )
 
-fun DrawScope.drawDragAndDropList(
-    items: List<ListItem>,
-    draggedItem: ListItem?,
-    dragOffset: Offset,
-    textMeasurer: TextMeasurer,
-) {
-    var draggedOffset: Float = draggedItem?.y ?: 0f
-    // Рассчитываем смещения для всех элементов
-    val itemOffsets: List<Float> = items.mapIndexed { index, item ->
-        val isDragged = item == draggedItem
-        when {
-            isDragged -> {
-                // Перетаскиваемый элемент - используем его оригинальную позицию + dragOffset
-                draggedOffset = item.y + dragOffset.y
-                draggedOffset
+        Row {
+
+            val state = rememberLazyListState()
+            val scope = rememberCoroutineScope()
+
+            TextButton(onClick = {
+                scope.launch {
+                    state.animateScrollToItem(max(0, state.firstVisibleItemIndex - 2))
+                }
+            }) {
+                Text("Back")
             }
 
-            draggedItem != null -> {
-                // Не перетаскиваемые элементы - рассчитываем их смещение
-                val draggedCurrentY = draggedItem.y + dragOffset.y
-                val draggedOriginalIndex = items.indexOf(draggedItem)
-                val draggedCurrentFullPosScrolled = (dragOffset.y / posFullHeight).toInt()
-
-                // Определяем куда должен попасть перетаскиваемый элемент
-                val targetIndex = (draggedCurrentY / (posFullHeight)).roundToInt()
-                    .coerceIn(0, items.size - 1)
-
-                val draggedCurrentIndex = draggedOriginalIndex + draggedCurrentFullPosScrolled
-
-                when {
-                    //Перетаскиваемый элемент движется вниз
-                    dragOffset.y > 0 &&
-                            index > draggedOriginalIndex &&
-                            index <= (draggedCurrentIndex + 1) -> {
-                        max(
-                            item.y - dragOffset.y + posFullHeight * (index - draggedOriginalIndex - 1),
-                            item.y - posFullHeight
-                        )
-                    }
-
-                    //Перетаскиваемый элемент движется вeрх
-                    dragOffset.y < 0 &&
-                            index < draggedOriginalIndex &&
-                            index >= (draggedCurrentIndex - 1) -> {
-                        min(
-                            item.y - dragOffset.y - posFullHeight * (draggedOriginalIndex - index - 1),
-                            item.y + posFullHeight
-                        )
-                    }
-
-                    else -> item.y
+            LazyRow(
+                modifier = Modifier.weight(1f),
+                state = state,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                userScrollEnabled = false
+            ) {
+                items(sourceItems) { item ->
+                    Text(
+                        text = item.text,
+                        modifier = Modifier
+                            .dragAndDropSource { ->
+                                detectTapGestures(
+                                    onPress = { offset ->
+                                        log("startTransfer")
+                                        startTransfer(
+                                            transferData = DragAndDropTransferData(
+                                                clipData = ClipData.newPlainText("item", item.text)
+                                            )
+                                        )
+                                    })
+                            }
+                            .background(
+                                color = Color(0xFF2196F3),
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(26.dp),
+                        color = Color.White
+                    )
                 }
             }
 
-            else -> item.y
+            TextButton(onClick = {
+                scope.launch {
+                    state.animateScrollToItem(min(sourceItems.lastIndex, state.firstVisibleItemIndex + 2))
+                }
+            }) {
+                Text("Forw")
+            }
         }
-    }
 
-    items.forEachIndexed { index, item ->
-        val isDragged = item == draggedItem
-        val itemOffset = itemOffsets[index]
+        Spacer(modifier = Modifier.height(16.dp))
 
-        if (!isDragged) {
-            itemView(false, textMeasurer, itemOffset, item)
-        }
-    }
-
-    draggedItem?.let { item ->
-        itemView(true, textMeasurer, draggedOffset, item)
-    }
-}
-
-private fun DrawScope.itemView(isDragged: Boolean, textMeasurer: TextMeasurer, itemOffset: Float, item: ListItem) {
-    val alpha = if (isDragged) 0.7f else 1f
-    drawRect(
-        color = if (isDragged) Color.LightGray else Color.White,
-        topLeft = Offset(20f, itemOffset),
-        size = Size(size.width - 40f, itemHeight),
-        alpha = alpha
-    )
-
-    val textResult = textMeasurer.measure(
-        text = item.text,
-        style = TextStyle(
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Medium
+        // Column для сброса элементов
+        Text(
+            "Column - Вертикальный список",
+            style = MaterialTheme.typography.titleLarge
         )
-    )
+        //val isColumnVisualHovered = remember(isHovered, columnItems) { isHovered.value && columnItems.isEmpty() }
 
-    drawText(
-        textLayoutResult = textResult,
-        topLeft = Offset(
-            40f,
-            itemOffset + (itemHeight - textResult.size.height) / 2
-        ),
-        alpha = alpha
-    )
+        val columnDragAndDropTarget = remember {
+            createColumnDragAndDropTarget(
+                isHovered = isHovered,
+                columnItems = columnItems,
+                itemIndexHovered = itemIndexHovered,
+            )
+        }
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .heightIn(min = 200.dp)
+                .border(
+                    width = 2.dp,
+                    color = if (isHovered.value && columnItems.isEmpty()) Color(0xFF4CAF50)
+                    else Color.Gray,
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .background(
+                    color = if (isHovered.value && columnItems.isEmpty()) Color(0xFFE8F5E9)
+                    else Color.Transparent,
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .dragAndDropTargetIfNeed(
+                    condition = true,
+                    target = columnDragAndDropTarget
+                )
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (columnItems.isEmpty()) {
+                item {
+                    Text(
+                        "сюда",
+                        color = Color.Gray,
+                        modifier = Modifier.padding(32.dp)
+                    )
+                }
+            } else {
+                itemsIndexed(columnItems) { index, item ->
+                    val rowDragAndDropTarget = remember {
+                        createItemsRowDragAndDropTarget(
+                            index = index,
+                            itemIndexHovered = itemIndexHovered,
+                            columnItems = columnItems,
+                        )
+                    }
+
+                    Column {
+                        Spacer(
+                            Modifier
+                                .fillMaxWidth()
+                                .height(if (itemIndexHovered.value == index) 108.dp else 0.dp)
+                        )
+                        when (item) {
+                            is EmptyItem -> {
+                                Box(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(100.dp)
+                                )
+                            }
+
+                            is TextItem -> {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(100.dp)
+                                        .background(
+                                            color = Color(0xFF4CAF50),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .dragAndDropTargetIfNeed(
+                                            condition = true,
+                                            target = rowDragAndDropTarget
+                                        )
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = item.text,
+                                        color = Color.White
+                                    )
+                                    TextButton(
+                                        onClick = {
+                                            columnItems.removeAt(index)
+                                        }
+                                    ) {
+                                        Text("X", color = Color.White)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
-@Preview
-@Composable
-fun DefaultPreview() {
-    MyApplicationTheme {
-        DragAndDropCanvas()
+private fun Modifier.dragAndDropTargetIfNeed(
+    condition: Boolean,
+    target: DragAndDropTarget,
+): Modifier {
+    return if (condition) {
+        dragAndDropTarget(
+            shouldStartDragAndDrop = { event ->
+                event
+                    .mimeTypes()
+                    .contains(ClipDescription.MIMETYPE_TEXT_PLAIN)
+            },
+            target = target
+        )
+    } else this
+}
+
+private fun createGlobalDragAndDropTarget(
+    isHovered: MutableState<Boolean>,
+    itemIndexHovered: MutableState<Int?>,
+): DragAndDropTarget {
+    return object : DragAndDropTarget {
+        override fun onDrop(event: DragAndDropEvent): Boolean {
+            itemIndexHovered.value = null
+            return false
+        }
+
+        override fun onEntered(event: DragAndDropEvent) {
+            isHovered.value = false
+            itemIndexHovered.value = null
+        }
+    }
+}
+
+private fun createColumnDragAndDropTarget(
+    isHovered: MutableState<Boolean>,
+    columnItems: MutableList<ColumnItem>,
+    itemIndexHovered: MutableState<Int?>,
+): DragAndDropTarget {
+    return object : DragAndDropTarget {
+        override fun onDrop(event: DragAndDropEvent): Boolean {
+            val item = event
+                .toAndroidDragEvent()
+                .clipData
+                ?.getItemAt(0)
+                ?.text
+                ?.toString()
+                ?.let { TextItem(it) }
+
+            if (item != null) columnItems.add(itemIndexHovered.value ?: (columnItems.lastIndex), item)
+            isHovered.value = false
+            itemIndexHovered.value = null
+            return true
+        }
+
+        override fun onEntered(event: DragAndDropEvent) {
+            isHovered.value = true
+        }
+
+        override fun onExited(event: DragAndDropEvent) {
+            isHovered.value = false
+        }
+    }
+}
+
+private fun createItemsRowDragAndDropTarget(
+    index: Int,
+    itemIndexHovered: MutableState<Int?>,
+    columnItems: MutableList<ColumnItem>,
+): DragAndDropTarget {
+    return object : DragAndDropTarget {
+        override fun onDrop(event: DragAndDropEvent): Boolean {
+            val item = event
+                .toAndroidDragEvent()
+                .clipData
+                ?.getItemAt(0)
+                ?.text
+                ?.toString()
+                ?.let { TextItem(it) }
+
+            if (item != null) columnItems.add(itemIndexHovered.value ?: (columnItems.lastIndex - 1), item)
+            itemIndexHovered.value = null
+            return true
+        }
+
+        override fun onEntered(event: DragAndDropEvent) {
+            itemIndexHovered.value.let { hoveredIndex ->
+                when {
+                    hoveredIndex == null || index < hoveredIndex -> {
+                        itemIndexHovered.value = index
+                    }
+
+                    else -> {
+                        itemIndexHovered.value = min(index + 1, columnItems.lastIndex)
+                    }
+                }
+            }
+        }
     }
 }
