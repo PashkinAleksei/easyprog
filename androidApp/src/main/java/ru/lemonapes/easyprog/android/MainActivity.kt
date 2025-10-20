@@ -14,6 +14,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,7 +23,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -34,7 +34,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -76,7 +75,7 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier
                         .fillMaxSize()
-                        .dragAndDropTargetIfNeed(true, globalDragAndDropTarget),
+                        .dragAndDropTextTarget(globalDragAndDropTarget),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     DragDropExample(
@@ -99,7 +98,6 @@ fun DragDropExample(
     isHovered: MutableState<Boolean>,
     itemIndexHovered: MutableState<Int?>,
 ) {
-    log("${itemIndexHovered.value}")
     val sourceItems = listOf(
         TextItem("Элемент 1"), TextItem("Элемент 2"),
         TextItem("Элемент 3"), TextItem("Элемент 4"),
@@ -108,13 +106,13 @@ fun DragDropExample(
         TextItem("Элемент 9"), TextItem("Элемент 10"),
     )
     val columnItems = remember {
-        mutableStateListOf<ColumnItem>(EmptyItem)
+        mutableStateListOf<ColumnItem>(sourceItems.first(), EmptyItem)
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(40.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Row с исходными элементами
@@ -183,7 +181,7 @@ fun DragDropExample(
             "Column - Вертикальный список",
             style = MaterialTheme.typography.titleLarge
         )
-        //val isColumnVisualHovered = remember(isHovered, columnItems) { isHovered.value && columnItems.isEmpty() }
+        val isColumnVisualHovered = isHovered.value && columnItems.size <= 1
 
         val columnDragAndDropTarget = remember {
             createColumnDragAndDropTarget(
@@ -198,20 +196,19 @@ fun DragDropExample(
                 .heightIn(min = 200.dp)
                 .border(
                     width = 2.dp,
-                    color = if (isHovered.value && columnItems.isEmpty()) Color(0xFF4CAF50)
+                    color = if (isColumnVisualHovered) Color(0xFF4CAF50)
                     else Color.Gray,
                     shape = RoundedCornerShape(8.dp)
                 )
                 .background(
-                    color = if (isHovered.value && columnItems.isEmpty()) Color(0xFFE8F5E9)
+                    color = if (isColumnVisualHovered) Color(0xFFE8F5E9)
                     else Color.Transparent,
                     shape = RoundedCornerShape(8.dp)
                 )
-                .dragAndDropTargetIfNeed(
-                    condition = true,
-                    target = columnDragAndDropTarget
-                )
-                .padding(16.dp),
+                .dragAndDropTextTarget(columnDragAndDropTarget)
+                //если убрать - будет светомузыка, если сделать слева 8, то справа тоже будет хватать 8ми.
+                .padding(end = 16.dp),
+            contentPadding = PaddingValues(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (columnItems.isEmpty()) {
@@ -232,47 +229,50 @@ fun DragDropExample(
                         )
                     }
 
-                    Column {
-                        Spacer(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(if (itemIndexHovered.value == index) 108.dp else 0.dp)
-                        )
-                        when (item) {
-                            is EmptyItem -> {
-                                Box(
+                    when (item) {
+                        is EmptyItem -> {
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(100.dp)
+                            )
+                        }
+
+                        is TextItem -> {
+                            Column {
+                                Spacer(
                                     Modifier
                                         .fillMaxWidth()
-                                        .height(100.dp)
+                                        .height(if (itemIndexHovered.value == index) 108.dp else 0.dp)
                                 )
-                            }
-
-                            is TextItem -> {
-                                Row(
+                                Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(100.dp)
-                                        .background(
-                                            color = Color(0xFF4CAF50),
-                                            shape = RoundedCornerShape(8.dp)
-                                        )
-                                        .dragAndDropTargetIfNeed(
-                                            condition = true,
-                                            target = rowDragAndDropTarget
-                                        )
-                                        .padding(16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                        .dragAndDropTextTarget(rowDragAndDropTarget)
                                 ) {
-                                    Text(
-                                        text = item.text,
-                                        color = Color.White
-                                    )
-                                    TextButton(
-                                        onClick = {
-                                            columnItems.removeAt(index)
-                                        }
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(start = 16.dp)
+                                            .height(100.dp)
+                                            .background(
+                                                color = Color(0xFF4CAF50),
+                                                shape = RoundedCornerShape(8.dp)
+                                            )
+                                            .padding(16.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Text("X", color = Color.White)
+                                        Text(
+                                            text = item.text,
+                                            color = Color.White
+                                        )
+                                        TextButton(
+                                            onClick = {
+                                                columnItems.removeAt(index)
+                                            }
+                                        ) {
+                                            Text("X", color = Color.White)
+                                        }
                                     }
                                 }
                             }
@@ -284,21 +284,16 @@ fun DragDropExample(
     }
 }
 
-private fun Modifier.dragAndDropTargetIfNeed(
-    condition: Boolean,
+private fun Modifier.dragAndDropTextTarget(
     target: DragAndDropTarget,
-): Modifier {
-    return if (condition) {
-        dragAndDropTarget(
-            shouldStartDragAndDrop = { event ->
-                event
-                    .mimeTypes()
-                    .contains(ClipDescription.MIMETYPE_TEXT_PLAIN)
-            },
-            target = target
-        )
-    } else this
-}
+) = dragAndDropTarget(
+    shouldStartDragAndDrop = { event ->
+        event
+            .mimeTypes()
+            .contains(ClipDescription.MIMETYPE_TEXT_PLAIN)
+    },
+    target = target
+)
 
 private fun createGlobalDragAndDropTarget(
     isHovered: MutableState<Boolean>,
@@ -311,6 +306,7 @@ private fun createGlobalDragAndDropTarget(
         }
 
         override fun onEntered(event: DragAndDropEvent) {
+            log("Global onEntered")
             isHovered.value = false
             itemIndexHovered.value = null
         }
@@ -339,6 +335,7 @@ private fun createColumnDragAndDropTarget(
         }
 
         override fun onEntered(event: DragAndDropEvent) {
+            log("Column onEntered")
             isHovered.value = true
         }
 
@@ -363,12 +360,13 @@ private fun createItemsRowDragAndDropTarget(
                 ?.toString()
                 ?.let { TextItem(it) }
 
-            if (item != null) columnItems.add(itemIndexHovered.value ?: (columnItems.lastIndex - 1), item)
+            if (item != null) columnItems.add(index, item)
             itemIndexHovered.value = null
-            return true
+            return false
         }
 
         override fun onEntered(event: DragAndDropEvent) {
+            log("item $index onEntered")
             itemIndexHovered.value.let { hoveredIndex ->
                 when {
                     hoveredIndex == null || index < hoveredIndex -> {
