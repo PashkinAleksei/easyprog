@@ -112,7 +112,7 @@ fun DragDropExample(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(40.dp),
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Row с исходными элементами
