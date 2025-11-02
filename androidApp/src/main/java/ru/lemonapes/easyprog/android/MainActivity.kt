@@ -205,9 +205,7 @@ fun DragDropExample(
                     else Color.Transparent,
                     shape = RoundedCornerShape(8.dp)
                 )
-                .dragAndDropTextTarget(columnDragAndDropTarget)
-                //если убрать - будет светомузыка, если сделать слева 8, то справа тоже будет хватать 8ми.
-                .padding(end = 16.dp),
+                .dragAndDropTextTarget(columnDragAndDropTarget),
             contentPadding = PaddingValues(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -253,7 +251,7 @@ fun DragDropExample(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(start = 16.dp)
+                                            .padding(horizontal = 16.dp)
                                             .height(100.dp)
                                             .background(
                                                 color = Color(0xFF4CAF50),
