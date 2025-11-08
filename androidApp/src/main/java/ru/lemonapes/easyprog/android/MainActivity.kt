@@ -88,9 +88,15 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-sealed interface ColumnItem
-private data object EmptyItem : ColumnItem
-private data class TextItem(val text: String) : ColumnItem
+sealed interface ColumnItem {
+    val id: String
+}
+
+private data object EmptyItem : ColumnItem {
+    override val id: String = "empty"
+}
+
+private data class TextItem(val text: String, override val id: String = text) : ColumnItem
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -218,7 +224,7 @@ fun DragDropExample(
                     )
                 }
             } else {
-                itemsIndexed(columnItems) { index, item ->
+                itemsIndexed(columnItems, key = { _, item -> item.id }) { index, item ->
                     val rowDragAndDropTarget = remember {
                         createItemsRowDragAndDropTarget(
                             index = index,
