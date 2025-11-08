@@ -250,7 +250,7 @@ fun DragDropExample(
                                     .fillMaxWidth()
                                     .padding(bottom = botPadding)
                             ) {
-                                val spacerHeight = (if (itemIndexHovered.value == index) 60.dp else 0.dp) + topPadding
+                                val spacerHeight = (if (itemIndexHovered.value == index) 100.dp else 0.dp) + topPadding
                                 Box(
                                     Modifier
                                         .fillMaxWidth()
