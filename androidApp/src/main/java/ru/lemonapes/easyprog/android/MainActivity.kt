@@ -34,10 +34,12 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -99,6 +101,7 @@ sealed interface ColumnItem {
     val id: Long
 }
 
+//TODO: чекнуть можно ли убрать data вместо id
 private data class TextItem(val text: String, override val id: Long = Calendar.getInstance().timeInMillis) : ColumnItem
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -216,7 +219,7 @@ fun DragDropExample(
                     shape = RoundedCornerShape(8.dp)
                 )
                 .dragAndDropTextTarget(columnDragAndDropTarget),
-            contentPadding = PaddingValues(bottom = 108.dp),
+            contentPadding = PaddingValues(bottom = 8.dp),
         ) {
             if (columnItems.isEmpty()) {
                 item {
@@ -249,6 +252,12 @@ fun DragDropExample(
                                     }
                                     Row(
                                         modifier = Modifier
+                                            .dragAndDropSource { _ ->
+                                                columnItems.removeAt(index)
+                                                DragAndDropTransferData(
+                                                    ClipData.newPlainText("dragged_item", item.text)
+                                                )
+                                            }
                                             .fillMaxWidth()
                                             .padding(horizontal = 16.dp)
                                             .height(100.dp)
@@ -426,7 +435,7 @@ private fun createBotItemDragAndDropTarget(
                 ?.toString()
                 ?.let { TextItem(it) }
 
-            if (item != null) columnItems.add(min(index + 1, columnItems.lastIndex), item)
+            if (item != null) columnItems.add(max(index + 1, columnItems.lastIndex), item)
             itemIndexHovered.value = null
             return true
         }
