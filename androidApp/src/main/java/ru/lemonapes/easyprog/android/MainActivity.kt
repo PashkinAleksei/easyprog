@@ -2,6 +2,7 @@ package ru.lemonapes.easyprog.android
 
 import android.content.ClipData
 import android.content.ClipDescription
+import android.icu.util.Calendar
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -89,14 +90,14 @@ class MainActivity : ComponentActivity() {
 }
 
 sealed interface ColumnItem {
-    val id: String
+    val id: Long
 }
 
 private data object EmptyItem : ColumnItem {
-    override val id: String = "empty"
+    override val id: Long = 0
 }
 
-private data class TextItem(val text: String, override val id: String = text) : ColumnItem
+private data class TextItem(val text: String, override val id: Long = Calendar.getInstance().timeInMillis) : ColumnItem
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -225,7 +226,7 @@ fun DragDropExample(
                 }
             } else {
                 itemsIndexed(columnItems, key = { _, item -> item.id }) { index, item ->
-                    val rowDragAndDropTarget = remember {
+                    val rowDragAndDropTarget = remember(index, item) {
                         createItemsRowDragAndDropTarget(
                             index = index,
                             itemIndexHovered = itemIndexHovered,
