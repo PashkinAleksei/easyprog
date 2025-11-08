@@ -18,11 +18,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -30,6 +32,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -46,6 +49,7 @@ import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import ru.lemonapes.easyprog.Utils.Companion.log
@@ -73,13 +77,13 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                Surface(
+                Scaffold(
                     modifier = Modifier
                         .fillMaxSize()
                         .dragAndDropTextTarget(globalDragAndDropTarget),
-                    color = MaterialTheme.colorScheme.background
-                ) {
+                ) { paddings ->
                     DragDropExample(
+                        modifier = Modifier.padding(paddings),
                         isHovered = isHovered,
                         itemIndexHovered = itemIndexHovered,
                     )
@@ -93,15 +97,12 @@ sealed interface ColumnItem {
     val id: Long
 }
 
-private data object EmptyItem : ColumnItem {
-    override val id: Long = 0
-}
-
 private data class TextItem(val text: String, override val id: Long = Calendar.getInstance().timeInMillis) : ColumnItem
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DragDropExample(
+    modifier: Modifier = Modifier,
     isHovered: MutableState<Boolean>,
     itemIndexHovered: MutableState<Int?>,
 ) {
@@ -113,11 +114,11 @@ fun DragDropExample(
         TextItem("Элемент 9"), TextItem("Элемент 10"),
     )
     val columnItems = remember {
-        mutableStateListOf<ColumnItem>(sourceItems.first(), EmptyItem)
+        mutableStateListOf<ColumnItem>(sourceItems.first())
     }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -188,7 +189,7 @@ fun DragDropExample(
             "Column - Вертикальный список",
             style = MaterialTheme.typography.titleLarge
         )
-        val isColumnVisualHovered = isHovered.value && columnItems.size <= 1
+        val isColumnVisualHovered = isHovered.value && columnItems.isEmpty()
 
         val columnDragAndDropTarget = remember {
             createColumnDragAndDropTarget(
@@ -213,8 +214,6 @@ fun DragDropExample(
                     shape = RoundedCornerShape(8.dp)
                 )
                 .dragAndDropTextTarget(columnDragAndDropTarget),
-            contentPadding = PaddingValues(vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (columnItems.isEmpty()) {
                 item {
@@ -226,29 +225,37 @@ fun DragDropExample(
                 }
             } else {
                 itemsIndexed(columnItems, key = { _, item -> item.id }) { index, item ->
-                    val rowDragAndDropTarget = remember(index, item) {
-                        createItemsRowDragAndDropTarget(
-                            index = index,
-                            itemIndexHovered = itemIndexHovered,
-                            columnItems = columnItems,
-                        )
-                    }
-
                     when (item) {
-                        is EmptyItem -> {
-                            Box(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .height(100.dp)
-                            )
-                        }
-
                         is TextItem -> {
-                            Column {
-                                Spacer(
+                            val topPadding = if (index == 0) 16.dp else 8.dp
+                            val botPadding = if (index == columnItems.lastIndex) 116.dp else 0.dp
+
+                            val rowDragAndDropTarget = remember(index, item) {
+                                createItemsRowDragAndDropTarget(
+                                    index = index,
+                                    itemIndexHovered = itemIndexHovered,
+                                    columnItems = columnItems,
+                                )
+                            }
+                            val spacerDragAndDropTarget = remember(index, item) {
+                                createSpacerDragAndDropTarget(
+                                    index = index,
+                                    itemIndexHovered = itemIndexHovered,
+                                    columnItems = columnItems,
+                                )
+                            }
+
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = botPadding)
+                            ) {
+                                val spacerHeight = (if (itemIndexHovered.value == index) 60.dp else 0.dp) + topPadding
+                                Box(
                                     Modifier
                                         .fillMaxWidth()
-                                        .height(if (itemIndexHovered.value == index) 108.dp else 0.dp)
+                                        .height(spacerHeight)
+                                        .dragAndDropTextTarget(spacerDragAndDropTarget)
                                 )
                                 Box(
                                     modifier = Modifier
@@ -333,7 +340,7 @@ private fun createColumnDragAndDropTarget(
                 ?.toString()
                 ?.let { TextItem(it) }
 
-            if (item != null) columnItems.add(itemIndexHovered.value ?: (columnItems.lastIndex), item)
+            if (item != null) columnItems.add(item)
             isHovered.value = false
             itemIndexHovered.value = null
             return true
@@ -341,11 +348,38 @@ private fun createColumnDragAndDropTarget(
 
         override fun onEntered(event: DragAndDropEvent) {
             log("Column onEntered")
+            itemIndexHovered.value = null
             isHovered.value = true
         }
 
         override fun onExited(event: DragAndDropEvent) {
             isHovered.value = false
+        }
+    }
+}
+
+private fun createSpacerDragAndDropTarget(
+    index: Int,
+    itemIndexHovered: MutableState<Int?>,
+    columnItems: MutableList<ColumnItem>,
+): DragAndDropTarget {
+    return object : DragAndDropTarget {
+        override fun onDrop(event: DragAndDropEvent): Boolean {
+            val item = event
+                .toAndroidDragEvent()
+                .clipData
+                ?.getItemAt(0)
+                ?.text
+                ?.toString()
+                ?.let { TextItem(it) }
+
+            if (item != null) columnItems.add(index, item)
+            itemIndexHovered.value = null
+            return true
+        }
+
+        override fun onEntered(event: DragAndDropEvent) {
+            log("spacer $index onEntered")
         }
     }
 }
@@ -365,23 +399,17 @@ private fun createItemsRowDragAndDropTarget(
                 ?.toString()
                 ?.let { TextItem(it) }
 
-            if (item != null) columnItems.add(index, item)
+            if (item != null) columnItems.add(min(index + 1, columnItems.lastIndex), item)
             itemIndexHovered.value = null
-            return false
+            return true
         }
 
         override fun onEntered(event: DragAndDropEvent) {
             log("item $index onEntered")
-            itemIndexHovered.value.let { hoveredIndex ->
-                when {
-                    hoveredIndex == null || index < hoveredIndex -> {
-                        itemIndexHovered.value = index
-                    }
-
-                    else -> {
-                        itemIndexHovered.value = min(index + 1, columnItems.lastIndex)
-                    }
-                }
+            if (itemIndexHovered.value == index) {
+                if (index < columnItems.lastIndex) itemIndexHovered.value = index + 1 else itemIndexHovered.value = null
+            } else {
+                itemIndexHovered.value = index
             }
         }
     }
