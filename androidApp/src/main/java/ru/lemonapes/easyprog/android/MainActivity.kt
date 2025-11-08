@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,9 +30,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -49,6 +49,8 @@ import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Blue
+import androidx.compose.ui.graphics.Color.Companion.Green
 import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -146,7 +148,7 @@ fun DragDropExample(
                 modifier = Modifier.weight(1f),
                 state = state,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                userScrollEnabled = false
+                userScrollEnabled = false,
             ) {
                 items(sourceItems) { item ->
                     Text(
@@ -214,6 +216,7 @@ fun DragDropExample(
                     shape = RoundedCornerShape(8.dp)
                 )
                 .dragAndDropTextTarget(columnDragAndDropTarget),
+            contentPadding = PaddingValues(bottom = 108.dp),
         ) {
             if (columnItems.isEmpty()) {
                 item {
@@ -227,41 +230,23 @@ fun DragDropExample(
                 itemsIndexed(columnItems, key = { _, item -> item.id }) { index, item ->
                     when (item) {
                         is TextItem -> {
-                            val topPadding = if (index == 0) 16.dp else 8.dp
-                            val botPadding = if (index == columnItems.lastIndex) 116.dp else 0.dp
+                            val topPadding = if (index == 0) 8.dp else 0.dp
 
-                            val rowDragAndDropTarget = remember(index, item) {
-                                createItemsRowDragAndDropTarget(
-                                    index = index,
-                                    itemIndexHovered = itemIndexHovered,
-                                    columnItems = columnItems,
-                                )
-                            }
-                            val spacerDragAndDropTarget = remember(index, item) {
-                                createSpacerDragAndDropTarget(
-                                    index = index,
-                                    itemIndexHovered = itemIndexHovered,
-                                    columnItems = columnItems,
-                                )
-                            }
-
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = botPadding)
-                            ) {
-                                val spacerHeight = (if (itemIndexHovered.value == index) 100.dp else 0.dp) + topPadding
-                                Box(
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .height(spacerHeight)
-                                        .dragAndDropTextTarget(spacerDragAndDropTarget)
-                                )
-                                Box(
+                            Box {
+                                Column(
                                     modifier = Modifier
+                                        .padding(top = topPadding)
                                         .fillMaxWidth()
-                                        .dragAndDropTextTarget(rowDragAndDropTarget)
                                 ) {
+                                    if (itemIndexHovered.value == index) {
+                                        HorizontalDivider(
+                                            modifier = Modifier.padding(vertical = 3.dp),
+                                            thickness = 2.dp,
+                                            color = Red
+                                        )
+                                    } else {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -286,6 +271,48 @@ fun DragDropExample(
                                             Text("X", color = Color.White)
                                         }
                                     }
+                                    if (index == columnItems.lastIndex) {
+                                        if ((itemIndexHovered.value ?: -1) > columnItems.lastIndex) {
+                                            HorizontalDivider(
+                                                modifier = Modifier.padding(vertical = 3.dp),
+                                                thickness = 2.dp,
+                                                color = Red
+                                            )
+                                        } else {
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                        }
+                                    }
+                                }
+                                Column(
+                                    modifier = Modifier
+                                        .matchParentSize()
+                                ) {
+                                    val topItemDragAndDropTarget = remember(index, item) {
+                                        createTopItemDragAndDropTarget(
+                                            index = index,
+                                            itemIndexHovered = itemIndexHovered,
+                                            columnItems = columnItems,
+                                        )
+                                    }
+                                    val botItemDragAndDropTarget = remember(index, item) {
+                                        createBotItemDragAndDropTarget(
+                                            index = index,
+                                            itemIndexHovered = itemIndexHovered,
+                                            columnItems = columnItems,
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .weight(1f)
+                                            .dragAndDropTextTarget(topItemDragAndDropTarget)
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .weight(1f)
+                                            .dragAndDropTextTarget(botItemDragAndDropTarget)
+                                    )
                                 }
                             }
                         }
@@ -348,7 +375,7 @@ private fun createColumnDragAndDropTarget(
 
         override fun onEntered(event: DragAndDropEvent) {
             log("Column onEntered")
-            itemIndexHovered.value = null
+            itemIndexHovered.value = columnItems.lastIndex + 1
             isHovered.value = true
         }
 
@@ -358,7 +385,7 @@ private fun createColumnDragAndDropTarget(
     }
 }
 
-private fun createSpacerDragAndDropTarget(
+private fun createTopItemDragAndDropTarget(
     index: Int,
     itemIndexHovered: MutableState<Int?>,
     columnItems: MutableList<ColumnItem>,
@@ -379,12 +406,12 @@ private fun createSpacerDragAndDropTarget(
         }
 
         override fun onEntered(event: DragAndDropEvent) {
-            log("spacer $index onEntered")
+            itemIndexHovered.value = index
         }
     }
 }
 
-private fun createItemsRowDragAndDropTarget(
+private fun createBotItemDragAndDropTarget(
     index: Int,
     itemIndexHovered: MutableState<Int?>,
     columnItems: MutableList<ColumnItem>,
@@ -406,11 +433,7 @@ private fun createItemsRowDragAndDropTarget(
 
         override fun onEntered(event: DragAndDropEvent) {
             log("item $index onEntered")
-            if (itemIndexHovered.value == index) {
-                if (index < columnItems.lastIndex) itemIndexHovered.value = index + 1 else itemIndexHovered.value = null
-            } else {
-                itemIndexHovered.value = index
-            }
+            itemIndexHovered.value = index + 1
         }
     }
 }
