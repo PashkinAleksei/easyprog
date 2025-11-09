@@ -368,15 +368,7 @@ private fun createColumnDragAndDropTarget(
 ): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            val item = event
-                .toAndroidDragEvent()
-                .clipData
-                ?.getItemAt(0)
-                ?.text
-                ?.toString()
-                ?.let { TextItem(it) }
-
-            if (item != null) columnItems.add(item)
+            event.toItem()?.let { item -> columnItems.add(item) }
             isHovered.value = false
             itemIndexHovered.value = null
             return true
@@ -386,10 +378,6 @@ private fun createColumnDragAndDropTarget(
             log("Column onEntered")
             itemIndexHovered.value = columnItems.lastIndex + 1
             isHovered.value = true
-        }
-
-        override fun onExited(event: DragAndDropEvent) {
-            isHovered.value = false
         }
     }
 }
@@ -401,15 +389,7 @@ private fun createTopItemDragAndDropTarget(
 ): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            val item = event
-                .toAndroidDragEvent()
-                .clipData
-                ?.getItemAt(0)
-                ?.text
-                ?.toString()
-                ?.let { TextItem(it) }
-
-            if (item != null) columnItems.add(index, item)
+            event.toItem()?.let { item -> columnItems.add(index, item) }
             itemIndexHovered.value = null
             return true
         }
@@ -427,15 +407,7 @@ private fun createBotItemDragAndDropTarget(
 ): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            val item = event
-                .toAndroidDragEvent()
-                .clipData
-                ?.getItemAt(0)
-                ?.text
-                ?.toString()
-                ?.let { TextItem(it) }
-
-            if (item != null) columnItems.add(max(index + 1, columnItems.lastIndex), item)
+            event.toItem()?.let { item -> columnItems.add(max(index + 1, columnItems.lastIndex), item) }
             itemIndexHovered.value = null
             return true
         }
@@ -446,3 +418,13 @@ private fun createBotItemDragAndDropTarget(
         }
     }
 }
+
+private fun DragAndDropEvent.toItem(): ColumnItem? {
+    return toAndroidDragEvent()
+        .clipData
+        ?.getItemAt(0)
+        ?.text
+        ?.toString()
+        ?.let { TextItem(it) }
+}
+
