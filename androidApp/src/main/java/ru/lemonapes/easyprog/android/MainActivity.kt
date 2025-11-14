@@ -33,12 +33,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
@@ -117,7 +119,7 @@ private data class CopyVariableToVariable(
             target?.second?.let { targetIndex ->
                 val sourceItem = codeItems[sourceIndex] as CodePeace.IntVariable
                 val targetItem = codeItems.removeAt(targetIndex) as CodePeace.IntVariable
-                codeItems.add(targetIndex, targetItem.copy(value=sourceItem.value))
+                codeItems.add(targetIndex, targetItem.copy(value = sourceItem.value))
             }
         }
     }
@@ -142,6 +144,9 @@ fun MainRow(
         mutableStateListOf<CommandItem>()
     }
 
+    val showVictoryDialog = remember { mutableStateOf(false) }
+    val showTryAgainDialog = remember { mutableStateOf(false) }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -150,12 +155,43 @@ fun MainRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Button(onClick = {
-            commandItems.forEach { command ->
-                command.invoke(codeItems)
+            if (validateCommands(commandItems)) {
+                commandsExecution(
+                    codeItems = codeItems,
+                    commandItems = commandItems,
+                    showVictoryDialog = showVictoryDialog,
+                    showTryAgainDialog = showTryAgainDialog,
+                )
             }
         }) {
             Text("Старт")
         }
+    }
+
+    if (showVictoryDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showVictoryDialog.value = false },
+            title = { Text("Поздравляем!") },
+            text = { Text("Вы победили!") },
+            confirmButton = {
+                TextButton(onClick = { showVictoryDialog.value = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
+    if (showTryAgainDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showTryAgainDialog.value = false },
+            title = { Text("Попробуйте еще") },
+            text = { Text("Условие победы не выполнено") },
+            confirmButton = {
+                TextButton(onClick = { showTryAgainDialog.value = false }) {
+                    Text("OK")
+                }
+            }
+        )
     }
 
     Row(
@@ -169,6 +205,32 @@ fun MainRow(
         CommandsColumn(isHovered, itemIndexHovered, codeItems, commandItems)
         SourceColumn()
     }
+}
+
+private fun commandsExecution(
+    codeItems: SnapshotStateList<CodePeace>,
+    commandItems: SnapshotStateList<CommandItem>,
+    showVictoryDialog: MutableState<Boolean>,
+    showTryAgainDialog: MutableState<Boolean>,
+) {
+    commandItems.forEach { command ->
+        command.invoke(codeItems)
+    }
+    if (checkVictory(codeItems)) {
+        showVictoryDialog.value = true
+    } else {
+        showTryAgainDialog.value = true
+    }
+
+    // Возвращаем codeItems в начальное состояние
+    codeItems.clear()
+    codeItems.addAll(
+        listOf(
+            CodePeace.IntVariable(name = "a", value = 5),
+            CodePeace.IntVariable(name = "b", value = 10),
+            CodePeace.IntVariable(name = "c", value = null)
+        )
+    )
 }
 
 @Composable
@@ -557,5 +619,21 @@ private fun DragAndDropEvent.toItem(): CommandItem? {
         ?.text
         ?.toString()
         ?.let { CopyVariableToVariable() }
+}
+
+private fun checkVictory(codeItems: SnapshotStateList<CodePeace>): Boolean {
+    val firstVariable = codeItems[0] as? CodePeace.IntVariable
+    val secondVariable = codeItems[1] as? CodePeace.IntVariable
+
+    return firstVariable?.value == 10 && secondVariable?.value == 5
+}
+
+private fun validateCommands(commandItems: SnapshotStateList<CommandItem>): Boolean {
+    return commandItems.all { command ->
+        when (command) {
+            is CopyVariableToVariable -> command.source != null && command.target != null
+            else -> true
+        }
+    }
 }
 
