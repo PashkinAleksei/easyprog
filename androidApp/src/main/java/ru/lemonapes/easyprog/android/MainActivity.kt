@@ -46,6 +46,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
@@ -56,6 +57,8 @@ import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import ru.lemonapes.easyprog.Utils.Companion.log
 import kotlin.math.max
 
@@ -146,6 +149,8 @@ fun MainRow(
 
     val showVictoryDialog = remember { mutableStateOf(false) }
     val showTryAgainDialog = remember { mutableStateOf(false) }
+    val executingCommandIndex = remember { mutableStateOf<Int?>( null) }
+    val coroutineScope = rememberCoroutineScope()
 
     Row(
         modifier = modifier
@@ -156,12 +161,15 @@ fun MainRow(
     ) {
         Button(onClick = {
             if (validateCommands(commandItems)) {
-                commandsExecution(
-                    codeItems = codeItems,
-                    commandItems = commandItems,
-                    showVictoryDialog = showVictoryDialog,
-                    showTryAgainDialog = showTryAgainDialog,
-                )
+                coroutineScope.launch {
+                    commandsExecution(
+                        codeItems = codeItems,
+                        commandItems = commandItems,
+                        showVictoryDialog = showVictoryDialog,
+                        showTryAgainDialog = showTryAgainDialog,
+                        executingCommandIndex = executingCommandIndex,
+                    )
+                }
             }
         }) {
             Text("Старт")
@@ -202,20 +210,31 @@ fun MainRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         CodeColumn(codeItems)
-        CommandsColumn(isHovered, itemIndexHovered, codeItems, commandItems)
+        CommandsColumn(isHovered, itemIndexHovered, codeItems, commandItems, executingCommandIndex)
         SourceColumn()
     }
 }
 
-private fun commandsExecution(
+private suspend fun commandsExecution(
     codeItems: SnapshotStateList<CodePeace>,
     commandItems: SnapshotStateList<CommandItem>,
     showVictoryDialog: MutableState<Boolean>,
     showTryAgainDialog: MutableState<Boolean>,
+    executingCommandIndex: MutableState<Int?>,
 ) {
-    commandItems.forEach { command ->
+    commandItems.forEachIndexed { index, command ->
+        // Команда становится красной
+        executingCommandIndex.value = index
+        delay(500)
+
+        // Команда выполняется
         command.invoke(codeItems)
+        delay(500)
+
+        // Команда становится обратно зеленой
+        executingCommandIndex.value = null
     }
+
     if (checkVictory(codeItems)) {
         showVictoryDialog.value = true
     } else {
@@ -302,6 +321,7 @@ private fun RowScope.CommandsColumn(
     itemIndexHovered: MutableState<Int?>,
     codeItems: SnapshotStateList<CodePeace>,
     commandItems: SnapshotStateList<CommandItem>,
+    executingCommandIndex: MutableState<Int?>,
 ) {
 
     val isColumnVisualHovered = isHovered.value && commandItems.isEmpty()
@@ -364,7 +384,8 @@ private fun RowScope.CommandsColumn(
                                     is CopyVariableToVariable -> item.CommandRow(
                                         commandItems = commandItems,
                                         index = index,
-                                        codeItems = codeItems
+                                        codeItems = codeItems,
+                                        isExecuting = executingCommandIndex.value == index
                                     )
                                 }
                                 if (index == commandItems.lastIndex) {
@@ -423,26 +444,29 @@ private fun CopyVariableToVariable.CommandRow(
     commandItems: SnapshotStateList<CommandItem>,
     index: Int,
     codeItems: SnapshotStateList<CodePeace>,
+    isExecuting: Boolean,
 ) {
     val variables = codeItems.filterIsInstance<CodePeace.IntVariable>().map { it }
 
     val expanded1 = remember { mutableStateOf(false) }
 
     val expanded2 = remember { mutableStateOf(false) }
+    log("index $index isExecuting $isExecuting")
+    val backgroundColor = if (isExecuting) Color(0xFFFF9900) else Color(0xFF4CAF50)
 
     Row(
         modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .background(
+                color = backgroundColor,
+                shape = RoundedCornerShape(8.dp)
+            )
             .dragAndDropSource { _ ->
                 commandItems.removeAt(index)
                 DragAndDropTransferData(
                     ClipData.newPlainText("dragged_item", text)
                 )
             }
-            .padding(horizontal = 16.dp)
-            .background(
-                color = Color(0xFF4CAF50),
-                shape = RoundedCornerShape(8.dp)
-            )
             .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
