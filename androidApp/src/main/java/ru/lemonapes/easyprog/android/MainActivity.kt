@@ -13,6 +13,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.layout.Arrangement
@@ -27,11 +28,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,6 +44,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
@@ -91,14 +97,14 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-sealed interface ColumnItem {
+sealed interface CommandItem {
     val id: Long
     val text: String
 }
 
 private data class CopyVariableToVariable(
     override val id: Long = Calendar.getInstance().timeInMillis,
-) : ColumnItem {
+) : CommandItem {
     override val text
         get() = "Copy value"
     var target: Pair<String, Int>? = null
@@ -112,6 +118,14 @@ fun MainRow(
     isHovered: MutableState<Boolean>,
     itemIndexHovered: MutableState<Int?>,
 ) {
+    val codeItems = remember {
+        mutableStateListOf<CodePeace>(
+            CodePeace.IntVariable("a", 5),
+            CodePeace.IntVariable("b", 10),
+            CodePeace.IntVariable("c", null)
+        )
+    }
+
     Row(
         modifier = modifier
             .fillMaxSize()
@@ -119,8 +133,8 @@ fun MainRow(
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        CodeColumn()
-        TargetColumn(isHovered, itemIndexHovered)
+        CodeColumn(codeItems)
+        CommandsColumn(isHovered, itemIndexHovered, codeItems)
         SourceColumn()
     }
 }
@@ -164,14 +178,7 @@ private fun RowScope.SourceColumn() {
 }
 
 @Composable
-private fun RowScope.CodeColumn() {
-    val codeItems = remember {
-        mutableStateListOf<CodePeace>(
-            CodePeace.IntVariable("a", 5),
-            CodePeace.IntVariable("b", 10),
-            CodePeace.IntVariable("c", null)
-        )
-    }
+private fun RowScope.CodeColumn(codeItems: SnapshotStateList<CodePeace>) {
     LazyColumn(
         modifier = Modifier
             .fillMaxHeight()
@@ -196,20 +203,21 @@ private fun RowScope.CodeColumn() {
 }
 
 @Composable
-private fun RowScope.TargetColumn(
+private fun RowScope.CommandsColumn(
     isHovered: MutableState<Boolean>,
     itemIndexHovered: MutableState<Int?>,
+    codeItems: SnapshotStateList<CodePeace>,
 ) {
-    val columnItems = remember {
-        mutableStateListOf<ColumnItem>()
+    val commandItems = remember {
+        mutableStateListOf<CommandItem>()
     }
 
-    val isColumnVisualHovered = isHovered.value && columnItems.isEmpty()
+    val isColumnVisualHovered = isHovered.value && commandItems.isEmpty()
 
     val columnDragAndDropTarget = remember {
         createColumnDragAndDropTarget(
             isHovered = isHovered,
-            columnItems = columnItems,
+            commandItems = commandItems,
             itemIndexHovered = itemIndexHovered,
         )
     }
@@ -231,7 +239,7 @@ private fun RowScope.TargetColumn(
             .dragAndDropTextTarget(columnDragAndDropTarget),
         contentPadding = PaddingValues(bottom = 8.dp),
     ) {
-        if (columnItems.isEmpty()) {
+        if (commandItems.isEmpty()) {
             item {
                 Text(
                     "Колонка для комманд",
@@ -240,7 +248,7 @@ private fun RowScope.TargetColumn(
                 )
             }
         } else {
-            itemsIndexed(columnItems, key = { _, item -> item.id }) { index, item ->
+            itemsIndexed(commandItems, key = { _, item -> item.id }) { index, item ->
                 when (item) {
                     is CopyVariableToVariable -> {
                         val topPadding = if (index == 0) 8.dp else 0.dp
@@ -260,29 +268,9 @@ private fun RowScope.TargetColumn(
                                 } else {
                                     Spacer(modifier = Modifier.height(8.dp))
                                 }
-                                Row(
-                                    modifier = Modifier
-                                        .dragAndDropSource { _ ->
-                                            columnItems.removeAt(index)
-                                            DragAndDropTransferData(
-                                                ClipData.newPlainText("dragged_item", item.text)
-                                            )
-                                        }
-                                        .padding(horizontal = 16.dp)
-                                        .background(
-                                            color = Color(0xFF4CAF50),
-                                            shape = RoundedCornerShape(8.dp)
-                                        )
-                                        .padding(16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text(
-                                        text = item.text,
-                                        color = Color.White
-                                    )
-                                }
-                                if (index == columnItems.lastIndex) {
-                                    if ((itemIndexHovered.value ?: -1) > columnItems.lastIndex) {
+                                CommandRow(commandItems = commandItems, item = item, index = index, codeItems = codeItems)
+                                if (index == commandItems.lastIndex) {
+                                    if ((itemIndexHovered.value ?: -1) > commandItems.lastIndex) {
                                         HorizontalDivider(
                                             modifier = Modifier.padding(vertical = 3.dp),
                                             thickness = 2.dp,
@@ -301,14 +289,14 @@ private fun RowScope.TargetColumn(
                                     createTopItemDragAndDropTarget(
                                         index = index,
                                         itemIndexHovered = itemIndexHovered,
-                                        columnItems = columnItems,
+                                        commandItems = commandItems,
                                     )
                                 }
                                 val botItemDragAndDropTarget = remember(index, item) {
                                     createBotItemDragAndDropTarget(
                                         index = index,
                                         itemIndexHovered = itemIndexHovered,
-                                        columnItems = columnItems,
+                                        commandItems = commandItems,
                                     )
                                 }
                                 Box(
@@ -326,6 +314,107 @@ private fun RowScope.TargetColumn(
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CommandRow(
+    commandItems: SnapshotStateList<CommandItem>,
+    item: CommandItem,
+    index: Int,
+    codeItems: SnapshotStateList<CodePeace>,
+) {
+    val variableNames = codeItems.filterIsInstance<CodePeace.IntVariable>().map { it.name }
+
+    val expanded1 = remember { mutableStateOf(false) }
+    val selectedValue1 = remember { mutableStateOf("?") }
+
+    val expanded2 = remember { mutableStateOf(false) }
+    val selectedValue2 = remember { mutableStateOf("?") }
+
+    Row(
+        modifier = Modifier
+            .dragAndDropSource { _ ->
+                commandItems.removeAt(index)
+                DragAndDropTransferData(
+                    ClipData.newPlainText("dragged_item", item.text)
+                )
+            }
+            .padding(horizontal = 16.dp)
+            .background(
+                color = Color(0xFF4CAF50),
+                shape = RoundedCornerShape(8.dp)
+            )
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = item.text,
+            color = Color.White,
+            modifier = Modifier.padding(vertical = 6.dp)
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        // First dropdown
+        Box {
+            Text(
+                text = selectedValue1.value,
+                color = Color.White,
+                modifier = Modifier
+                    .background(
+                        color = Color(0xFF2E7D32),
+                        shape = RoundedCornerShape(4.dp)
+                    )
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .clickable { expanded1.value = true }
+            )
+            DropdownMenu(
+                expanded = expanded1.value,
+                onDismissRequest = { expanded1.value = false }
+            ) {
+                variableNames.forEach { name ->
+                    DropdownMenuItem(
+                        text = { Text(name) },
+                        onClick = {
+                            selectedValue1.value = name
+                            expanded1.value = false
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // Second dropdown
+        Box {
+            Text(
+                text = selectedValue2.value,
+                color = Color.White,
+                modifier = Modifier
+                    .background(
+                        color = Color(0xFF2E7D32),
+                        shape = RoundedCornerShape(4.dp)
+                    )
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .clickable { expanded2.value = true }
+            )
+            DropdownMenu(
+                expanded = expanded2.value,
+                onDismissRequest = { expanded2.value = false }
+            ) {
+                variableNames.forEach { name ->
+                    DropdownMenuItem(
+                        text = { Text(name) },
+                        onClick = {
+                            selectedValue2.value = name
+                            expanded2.value = false
+                        }
+                    )
                 }
             }
         }
@@ -363,12 +452,12 @@ private fun createGlobalDragAndDropTarget(
 
 private fun createColumnDragAndDropTarget(
     isHovered: MutableState<Boolean>,
-    columnItems: MutableList<ColumnItem>,
+    commandItems: MutableList<CommandItem>,
     itemIndexHovered: MutableState<Int?>,
 ): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            event.toItem()?.let { item -> columnItems.add(item) }
+            event.toItem()?.let { item -> commandItems.add(item) }
             isHovered.value = false
             itemIndexHovered.value = null
             return true
@@ -376,7 +465,7 @@ private fun createColumnDragAndDropTarget(
 
         override fun onEntered(event: DragAndDropEvent) {
             log("Column onEntered")
-            itemIndexHovered.value = columnItems.lastIndex + 1
+            itemIndexHovered.value = commandItems.lastIndex + 1
             isHovered.value = true
         }
     }
@@ -385,11 +474,11 @@ private fun createColumnDragAndDropTarget(
 private fun createTopItemDragAndDropTarget(
     index: Int,
     itemIndexHovered: MutableState<Int?>,
-    columnItems: MutableList<ColumnItem>,
+    commandItems: MutableList<CommandItem>,
 ): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            event.toItem()?.let { item -> columnItems.add(index, item) }
+            event.toItem()?.let { item -> commandItems.add(index, item) }
             itemIndexHovered.value = null
             return true
         }
@@ -403,11 +492,11 @@ private fun createTopItemDragAndDropTarget(
 private fun createBotItemDragAndDropTarget(
     index: Int,
     itemIndexHovered: MutableState<Int?>,
-    columnItems: MutableList<ColumnItem>,
+    commandItems: MutableList<CommandItem>,
 ): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            event.toItem()?.let { item -> columnItems.add(max(index + 1, columnItems.lastIndex), item) }
+            event.toItem()?.let { item -> commandItems.add(max(index + 1, commandItems.lastIndex), item) }
             itemIndexHovered.value = null
             return true
         }
@@ -419,7 +508,7 @@ private fun createBotItemDragAndDropTarget(
     }
 }
 
-private fun DragAndDropEvent.toItem(): ColumnItem? {
+private fun DragAndDropEvent.toItem(): CommandItem? {
     return toAndroidDragEvent()
         .clipData
         ?.getItemAt(0)
