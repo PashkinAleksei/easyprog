@@ -6,44 +6,39 @@ import android.icu.util.Calendar
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
@@ -51,24 +46,23 @@ import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.Blue
-import androidx.compose.ui.graphics.Color.Companion.Green
 import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import ru.lemonapes.easyprog.Utils.Companion.log
 import kotlin.math.max
-import kotlin.math.min
-
-data class ListItem(
-    val id: Int,
-    val text: String,
-    val y: Float = 0f,
-)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Включаем edge-to-edge режим и скрываем системные бары
+        enableEdgeToEdge()
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.systemBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+
         setContent {
             MyApplicationTheme {
                 val isHovered = remember { mutableStateOf(false) }
@@ -86,7 +80,7 @@ class MainActivity : ComponentActivity() {
                         .fillMaxSize()
                         .dragAndDropTextTarget(globalDragAndDropTarget),
                 ) { paddings ->
-                    DragDropExample(
+                    MainRow(
                         modifier = Modifier.padding(paddings),
                         isHovered = isHovered,
                         itemIndexHovered = itemIndexHovered,
@@ -99,149 +93,196 @@ class MainActivity : ComponentActivity() {
 
 sealed interface ColumnItem {
     val id: Long
+    val text: String
 }
 
-//TODO: чекнуть можно ли убрать data вместо id
-private data class TextItem(val text: String, override val id: Long = Calendar.getInstance().timeInMillis) : ColumnItem
+private data class CopyVariableToVariable(
+    override val id: Long = Calendar.getInstance().timeInMillis,
+) : ColumnItem {
+    override val text
+        get() = "Copy value"
+    var target: Pair<String, Int>? = null
+    var source: Pair<String, Int>? = null
+}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun DragDropExample(
+fun MainRow(
     modifier: Modifier = Modifier,
     isHovered: MutableState<Boolean>,
     itemIndexHovered: MutableState<Int?>,
 ) {
-    val sourceItems = listOf(
-        TextItem("Элемент 1"), TextItem("Элемент 2"),
-        TextItem("Элемент 3"), TextItem("Элемент 4"),
-        TextItem("Элемент 5"), TextItem("Элемент 6"),
-        TextItem("Элемент 7"), TextItem("Элемент 8"),
-        TextItem("Элемент 9"), TextItem("Элемент 10"),
-    )
-    val columnItems = remember {
-        mutableStateListOf<ColumnItem>(sourceItems.first())
-    }
-
-    Column(
+    Row(
         modifier = modifier
             .fillMaxSize()
+            .padding(top = 50.dp)
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Row с исходными элементами
-        Text(
-            "Row - Горизонтальный список",
-            style = MaterialTheme.typography.titleLarge
-        )
+        CodeColumn()
+        TargetColumn(isHovered, itemIndexHovered)
+        SourceColumn()
+    }
+}
 
-        Row {
+@Composable
+private fun RowScope.SourceColumn() {
+    val sourceItems = listOf(
+        CopyVariableToVariable()
+    )
 
-            val state = rememberLazyListState()
-            val scope = rememberCoroutineScope()
-
-            TextButton(onClick = {
-                scope.launch {
-                    state.animateScrollToItem(max(0, state.firstVisibleItemIndex - 2))
-                }
-            }) {
-                Text("Back")
-            }
-
-            LazyRow(
-                modifier = Modifier.weight(1f),
-                state = state,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                userScrollEnabled = false,
-            ) {
-                items(sourceItems) { item ->
-                    Text(
-                        text = item.text,
-                        modifier = Modifier
-                            .dragAndDropSource { ->
-                                detectTapGestures(
-                                    onPress = { offset ->
-                                        log("startTransfer")
-                                        startTransfer(
-                                            transferData = DragAndDropTransferData(
-                                                clipData = ClipData.newPlainText("item", item.text)
-                                            )
-                                        )
-                                    })
-                            }
-                            .background(
-                                color = Color(0xFF2196F3),
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .padding(26.dp),
-                        color = Color.White
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxHeight()
+            .weight(0.8f)
+            .border(
+                width = 2.dp,
+                color = Color.Gray,
+                shape = RoundedCornerShape(8.dp)
+            ),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        items(sourceItems) { item ->
+            Text(
+                text = item.text,
+                modifier = Modifier
+                    .dragAndDropSource { _ ->
+                        DragAndDropTransferData(
+                            ClipData.newPlainText("dragged_item", item.text)
+                        )
+                    }
+                    .background(
+                        color = Color(0xFF2196F3),
+                        shape = RoundedCornerShape(8.dp)
                     )
-                }
-            }
-
-            TextButton(onClick = {
-                scope.launch {
-                    state.animateScrollToItem(min(sourceItems.lastIndex, state.firstVisibleItemIndex + 2))
-                }
-            }) {
-                Text("Forw")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Column для сброса элементов
-        Text(
-            "Column - Вертикальный список",
-            style = MaterialTheme.typography.titleLarge
-        )
-        val isColumnVisualHovered = isHovered.value && columnItems.isEmpty()
-
-        val columnDragAndDropTarget = remember {
-            createColumnDragAndDropTarget(
-                isHovered = isHovered,
-                columnItems = columnItems,
-                itemIndexHovered = itemIndexHovered,
+                    .padding(16.dp),
+                color = Color.White
             )
         }
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .heightIn(min = 200.dp)
-                .border(
-                    width = 2.dp,
-                    color = if (isColumnVisualHovered) Color(0xFF4CAF50)
-                    else Color.Gray,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .background(
-                    color = if (isColumnVisualHovered) Color(0xFFE8F5E9)
-                    else Color.Transparent,
-                    shape = RoundedCornerShape(8.dp)
-                )
-                .dragAndDropTextTarget(columnDragAndDropTarget),
-            contentPadding = PaddingValues(bottom = 8.dp),
-        ) {
-            if (columnItems.isEmpty()) {
-                item {
-                    Text(
-                        "сюда",
-                        color = Color.Gray,
-                        modifier = Modifier.padding(32.dp)
-                    )
-                }
-            } else {
-                itemsIndexed(columnItems, key = { _, item -> item.id }) { index, item ->
-                    when (item) {
-                        is TextItem -> {
-                            val topPadding = if (index == 0) 8.dp else 0.dp
+    }
+}
 
-                            Box {
-                                Column(
+@Composable
+private fun RowScope.CodeColumn() {
+    val codeItems = remember {
+        mutableStateListOf<CodePeace>(
+            CodePeace.IntVariable("a", 5),
+            CodePeace.IntVariable("b", 10),
+            CodePeace.IntVariable("c", null)
+        )
+    }
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxHeight()
+            .weight(1.2f)
+            .border(
+                width = 2.dp,
+                color = Color.Gray,
+                shape = RoundedCornerShape(8.dp)
+            ),
+        contentPadding = PaddingValues(16.dp),
+    ) {
+
+        itemsIndexed(codeItems) { index, item ->
+            when (item) {
+                is CodePeace.IntVariable -> {
+                    val prefix = if (item.isMutable) "var" else "val"
+                    Text("$prefix ${item.name} = ${item.value}")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun RowScope.TargetColumn(
+    isHovered: MutableState<Boolean>,
+    itemIndexHovered: MutableState<Int?>,
+) {
+    val columnItems = remember {
+        mutableStateListOf<ColumnItem>()
+    }
+
+    val isColumnVisualHovered = isHovered.value && columnItems.isEmpty()
+
+    val columnDragAndDropTarget = remember {
+        createColumnDragAndDropTarget(
+            isHovered = isHovered,
+            columnItems = columnItems,
+            itemIndexHovered = itemIndexHovered,
+        )
+    }
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxHeight()
+            .weight(1f)
+            .border(
+                width = 2.dp,
+                color = if (isColumnVisualHovered) Color(0xFF4CAF50)
+                else Color.Gray,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .background(
+                color = if (isColumnVisualHovered) Color(0xFFE8F5E9)
+                else Color.Transparent,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .dragAndDropTextTarget(columnDragAndDropTarget),
+        contentPadding = PaddingValues(bottom = 8.dp),
+    ) {
+        if (columnItems.isEmpty()) {
+            item {
+                Text(
+                    "Колонка для комманд",
+                    color = Color.Gray,
+                    modifier = Modifier.padding(32.dp)
+                )
+            }
+        } else {
+            itemsIndexed(columnItems, key = { _, item -> item.id }) { index, item ->
+                when (item) {
+                    is CopyVariableToVariable -> {
+                        val topPadding = if (index == 0) 8.dp else 0.dp
+
+                        Box {
+                            Column(
+                                modifier = Modifier
+                                    .padding(top = topPadding)
+                                    .fillMaxWidth()
+                            ) {
+                                if (itemIndexHovered.value == index) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(vertical = 3.dp),
+                                        thickness = 2.dp,
+                                        color = Red
+                                    )
+                                } else {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
+                                Row(
                                     modifier = Modifier
-                                        .padding(top = topPadding)
-                                        .fillMaxWidth()
+                                        .dragAndDropSource { _ ->
+                                            columnItems.removeAt(index)
+                                            DragAndDropTransferData(
+                                                ClipData.newPlainText("dragged_item", item.text)
+                                            )
+                                        }
+                                        .padding(horizontal = 16.dp)
+                                        .background(
+                                            color = Color(0xFF4CAF50),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                        .padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    if (itemIndexHovered.value == index) {
+                                    Text(
+                                        text = item.text,
+                                        color = Color.White
+                                    )
+                                }
+                                if (index == columnItems.lastIndex) {
+                                    if ((itemIndexHovered.value ?: -1) > columnItems.lastIndex) {
                                         HorizontalDivider(
                                             modifier = Modifier.padding(vertical = 3.dp),
                                             thickness = 2.dp,
@@ -250,79 +291,38 @@ fun DragDropExample(
                                     } else {
                                         Spacer(modifier = Modifier.height(8.dp))
                                     }
-                                    Row(
-                                        modifier = Modifier
-                                            .dragAndDropSource { _ ->
-                                                columnItems.removeAt(index)
-                                                DragAndDropTransferData(
-                                                    ClipData.newPlainText("dragged_item", item.text)
-                                                )
-                                            }
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 16.dp)
-                                            .height(100.dp)
-                                            .background(
-                                                color = Color(0xFF4CAF50),
-                                                shape = RoundedCornerShape(8.dp)
-                                            )
-                                            .padding(16.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(
-                                            text = item.text,
-                                            color = Color.White
-                                        )
-                                        TextButton(
-                                            onClick = {
-                                                columnItems.removeAt(index)
-                                            }
-                                        ) {
-                                            Text("X", color = Color.White)
-                                        }
-                                    }
-                                    if (index == columnItems.lastIndex) {
-                                        if ((itemIndexHovered.value ?: -1) > columnItems.lastIndex) {
-                                            HorizontalDivider(
-                                                modifier = Modifier.padding(vertical = 3.dp),
-                                                thickness = 2.dp,
-                                                color = Red
-                                            )
-                                        } else {
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                        }
-                                    }
                                 }
-                                Column(
+                            }
+                            Column(
+                                modifier = Modifier
+                                    .matchParentSize()
+                            ) {
+                                val topItemDragAndDropTarget = remember(index, item) {
+                                    createTopItemDragAndDropTarget(
+                                        index = index,
+                                        itemIndexHovered = itemIndexHovered,
+                                        columnItems = columnItems,
+                                    )
+                                }
+                                val botItemDragAndDropTarget = remember(index, item) {
+                                    createBotItemDragAndDropTarget(
+                                        index = index,
+                                        itemIndexHovered = itemIndexHovered,
+                                        columnItems = columnItems,
+                                    )
+                                }
+                                Box(
                                     modifier = Modifier
-                                        .matchParentSize()
-                                ) {
-                                    val topItemDragAndDropTarget = remember(index, item) {
-                                        createTopItemDragAndDropTarget(
-                                            index = index,
-                                            itemIndexHovered = itemIndexHovered,
-                                            columnItems = columnItems,
-                                        )
-                                    }
-                                    val botItemDragAndDropTarget = remember(index, item) {
-                                        createBotItemDragAndDropTarget(
-                                            index = index,
-                                            itemIndexHovered = itemIndexHovered,
-                                            columnItems = columnItems,
-                                        )
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .weight(1f)
-                                            .dragAndDropTextTarget(topItemDragAndDropTarget)
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .weight(1f)
-                                            .dragAndDropTextTarget(botItemDragAndDropTarget)
-                                    )
-                                }
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                        .dragAndDropTextTarget(topItemDragAndDropTarget)
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                        .dragAndDropTextTarget(botItemDragAndDropTarget)
+                                )
                             }
                         }
                     }
@@ -425,6 +425,6 @@ private fun DragAndDropEvent.toItem(): ColumnItem? {
         ?.getItemAt(0)
         ?.text
         ?.toString()
-        ?.let { TextItem(it) }
+        ?.let { CopyVariableToVariable() }
 }
 
