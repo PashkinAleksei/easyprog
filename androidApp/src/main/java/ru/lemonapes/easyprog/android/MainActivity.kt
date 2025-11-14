@@ -178,11 +178,17 @@ fun MainRow(
 
     if (showVictoryDialog.value) {
         AlertDialog(
-            onDismissRequest = { showVictoryDialog.value = false },
+            onDismissRequest = {
+                showVictoryDialog.value = false
+                resetCodeItems(codeItems)
+            },
             title = { Text("Поздравляем!") },
             text = { Text("Вы победили!") },
             confirmButton = {
-                TextButton(onClick = { showVictoryDialog.value = false }) {
+                TextButton(onClick = {
+                    showVictoryDialog.value = false
+                    resetCodeItems(codeItems)
+                }) {
                     Text("OK")
                 }
             }
@@ -191,11 +197,17 @@ fun MainRow(
 
     if (showTryAgainDialog.value) {
         AlertDialog(
-            onDismissRequest = { showTryAgainDialog.value = false },
+            onDismissRequest = {
+                showTryAgainDialog.value = false
+                resetCodeItems(codeItems)
+            },
             title = { Text("Попробуйте еще") },
             text = { Text("Условие победы не выполнено") },
             confirmButton = {
-                TextButton(onClick = { showTryAgainDialog.value = false }) {
+                TextButton(onClick = {
+                    showTryAgainDialog.value = false
+                    resetCodeItems(codeItems)
+                }) {
                     Text("OK")
                 }
             }
@@ -240,16 +252,6 @@ private suspend fun commandsExecution(
     } else {
         showTryAgainDialog.value = true
     }
-
-    // Возвращаем codeItems в начальное состояние
-    codeItems.clear()
-    codeItems.addAll(
-        listOf(
-            CodePeace.IntVariable(name = "a", value = 5),
-            CodePeace.IntVariable(name = "b", value = 10),
-            CodePeace.IntVariable(name = "c", value = null)
-        )
-    )
 }
 
 @Composable
@@ -659,5 +661,16 @@ private fun validateCommands(commandItems: SnapshotStateList<CommandItem>): Bool
             else -> true
         }
     }
+}
+
+private fun resetCodeItems(codeItems: SnapshotStateList<CodePeace>) {
+    codeItems.clear()
+    codeItems.addAll(
+        listOf(
+            CodePeace.IntVariable(name = "a", value = 5),
+            CodePeace.IntVariable(name = "b", value = 10),
+            CodePeace.IntVariable(name = "c", value = null)
+        )
+    )
 }
 
