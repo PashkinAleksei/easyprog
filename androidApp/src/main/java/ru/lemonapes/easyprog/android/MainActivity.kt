@@ -33,10 +33,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -100,15 +100,27 @@ class MainActivity : ComponentActivity() {
 sealed interface CommandItem {
     val id: Long
     val text: String
+
+    operator fun invoke(codeItems: SnapshotStateList<CodePeace>)
 }
 
 private data class CopyVariableToVariable(
     override val id: Long = Calendar.getInstance().timeInMillis,
+    var target: Pair<String, Int?>? = null,
+    var source: Pair<String, Int?>? = null,
 ) : CommandItem {
     override val text
         get() = "Copy value"
-    var target: Pair<String, Int>? = null
-    var source: Pair<String, Int>? = null
+
+    override fun invoke(codeItems: SnapshotStateList<CodePeace>) {
+        source?.second?.let { sourceIndex ->
+            target?.second?.let { targetIndex ->
+                val sourceItem = codeItems[sourceIndex] as CodePeace.IntVariable
+                val targetItem = codeItems.removeAt(targetIndex) as CodePeace.IntVariable
+                codeItems.add(targetIndex, targetItem.copy(value=sourceItem.value))
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -120,10 +132,30 @@ fun MainRow(
 ) {
     val codeItems = remember {
         mutableStateListOf<CodePeace>(
-            CodePeace.IntVariable("a", 5),
-            CodePeace.IntVariable("b", 10),
-            CodePeace.IntVariable("c", null)
+            CodePeace.IntVariable(name = "a", value = 5),
+            CodePeace.IntVariable(name = "b", value = 10),
+            CodePeace.IntVariable(name = "c", value = null)
         )
+    }
+
+    val commandItems = remember {
+        mutableStateListOf<CommandItem>()
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp)
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Button(onClick = {
+            commandItems.forEach { command ->
+                command.invoke(codeItems)
+            }
+        }) {
+            Text("Старт")
+        }
     }
 
     Row(
@@ -134,7 +166,7 @@ fun MainRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         CodeColumn(codeItems)
-        CommandsColumn(isHovered, itemIndexHovered, codeItems)
+        CommandsColumn(isHovered, itemIndexHovered, codeItems, commandItems)
         SourceColumn()
     }
 }
@@ -207,10 +239,8 @@ private fun RowScope.CommandsColumn(
     isHovered: MutableState<Boolean>,
     itemIndexHovered: MutableState<Int?>,
     codeItems: SnapshotStateList<CodePeace>,
+    commandItems: SnapshotStateList<CommandItem>,
 ) {
-    val commandItems = remember {
-        mutableStateListOf<CommandItem>()
-    }
 
     val isColumnVisualHovered = isHovered.value && commandItems.isEmpty()
 
@@ -268,7 +298,13 @@ private fun RowScope.CommandsColumn(
                                 } else {
                                     Spacer(modifier = Modifier.height(8.dp))
                                 }
-                                CommandRow(commandItems = commandItems, item = item, index = index, codeItems = codeItems)
+                                when (item) {
+                                    is CopyVariableToVariable -> item.CommandRow(
+                                        commandItems = commandItems,
+                                        index = index,
+                                        codeItems = codeItems
+                                    )
+                                }
                                 if (index == commandItems.lastIndex) {
                                     if ((itemIndexHovered.value ?: -1) > commandItems.lastIndex) {
                                         HorizontalDivider(
@@ -321,26 +357,23 @@ private fun RowScope.CommandsColumn(
 }
 
 @Composable
-private fun CommandRow(
+private fun CopyVariableToVariable.CommandRow(
     commandItems: SnapshotStateList<CommandItem>,
-    item: CommandItem,
     index: Int,
     codeItems: SnapshotStateList<CodePeace>,
 ) {
-    val variableNames = codeItems.filterIsInstance<CodePeace.IntVariable>().map { it.name }
+    val variables = codeItems.filterIsInstance<CodePeace.IntVariable>().map { it }
 
     val expanded1 = remember { mutableStateOf(false) }
-    val selectedValue1 = remember { mutableStateOf("?") }
 
     val expanded2 = remember { mutableStateOf(false) }
-    val selectedValue2 = remember { mutableStateOf("?") }
 
     Row(
         modifier = Modifier
             .dragAndDropSource { _ ->
                 commandItems.removeAt(index)
                 DragAndDropTransferData(
-                    ClipData.newPlainText("dragged_item", item.text)
+                    ClipData.newPlainText("dragged_item", text)
                 )
             }
             .padding(horizontal = 16.dp)
@@ -352,7 +385,7 @@ private fun CommandRow(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = item.text,
+            text = "Copy",
             color = Color.White,
             modifier = Modifier.padding(vertical = 6.dp)
         )
@@ -362,7 +395,7 @@ private fun CommandRow(
         // First dropdown
         Box {
             Text(
-                text = selectedValue1.value,
+                text = source?.first ?: "?",
                 color = Color.White,
                 modifier = Modifier
                     .background(
@@ -376,11 +409,11 @@ private fun CommandRow(
                 expanded = expanded1.value,
                 onDismissRequest = { expanded1.value = false }
             ) {
-                variableNames.forEach { name ->
+                variables.forEach { variable ->
                     DropdownMenuItem(
-                        text = { Text(name) },
+                        text = { Text(variable.name) },
                         onClick = {
-                            selectedValue1.value = name
+                            source = variable.name to codeItems.indexOf(variable)
                             expanded1.value = false
                         }
                     )
@@ -390,10 +423,19 @@ private fun CommandRow(
 
         Spacer(modifier = Modifier.width(8.dp))
 
+
+        Text(
+            text = "to",
+            color = Color.White,
+            modifier = Modifier.padding(vertical = 6.dp)
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
         // Second dropdown
         Box {
             Text(
-                text = selectedValue2.value,
+                text = target?.first ?: "?",
                 color = Color.White,
                 modifier = Modifier
                     .background(
@@ -407,11 +449,11 @@ private fun CommandRow(
                 expanded = expanded2.value,
                 onDismissRequest = { expanded2.value = false }
             ) {
-                variableNames.forEach { name ->
+                variables.forEach { variable ->
                     DropdownMenuItem(
-                        text = { Text(name) },
+                        text = { Text(variable.name) },
                         onClick = {
-                            selectedValue2.value = name
+                            target = variable.name to codeItems.indexOf(variable)
                             expanded2.value = false
                         }
                     )
