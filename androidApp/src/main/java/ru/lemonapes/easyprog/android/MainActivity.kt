@@ -75,6 +75,8 @@ import kotlinx.coroutines.launch
 import ru.lemonapes.easyprog.Utils.Companion.log
 import kotlin.math.max
 
+private var draggedCommandItem: CommandItem? = null
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -291,7 +293,7 @@ private fun RowScope.SourceColumn() {
                 modifier = Modifier
                     .dragAndDropSource { _ ->
                         DragAndDropTransferData(
-                            ClipData.newPlainText("dragged_item", item.text)
+                            ClipData.newPlainText("adding_item", item.text)
                         )
                     }
                     .background(
@@ -511,7 +513,7 @@ private fun CopyVariableToVariable.CommandRow(
                 shape = RoundedCornerShape(8.dp)
             )
             .dragAndDropSource { _ ->
-                commandItems.removeAt(index)
+                draggedCommandItem = commandItems.removeAt(index)
                 DragAndDropTransferData(
                     ClipData.newPlainText("dragged_item", text)
                 )
@@ -690,12 +692,17 @@ private fun createBotItemDragAndDropTarget(
 }
 
 private fun DragAndDropEvent.toItem(): CommandItem? {
-    return toAndroidDragEvent()
+    val label = toAndroidDragEvent()
         .clipData
-        ?.getItemAt(0)
-        ?.text
+        ?.description
+        ?.label
         ?.toString()
-        ?.let { CopyVariableToVariable() }
+
+    return when (label) {
+        "adding_item" -> CopyVariableToVariable()
+        "dragged_item" -> draggedCommandItem
+        else -> null
+    }
 }
 
 private fun checkVictory(codeItems: SnapshotStateList<CodePeace>): Boolean {
