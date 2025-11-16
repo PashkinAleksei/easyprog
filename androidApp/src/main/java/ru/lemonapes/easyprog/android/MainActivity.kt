@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipDescription
 import android.icu.util.Calendar
 import android.os.Bundle
+import android.widget.Space
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -11,11 +12,13 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
+import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,11 +26,13 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -39,6 +44,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -48,6 +54,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
@@ -56,7 +63,13 @@ import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Red
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.lemonapes.easyprog.Utils.Companion.log
@@ -111,11 +124,11 @@ sealed interface CommandItem {
 
 private data class CopyVariableToVariable(
     override val id: Long = Calendar.getInstance().timeInMillis,
-    var target: Pair<String, Int?>? = null,
-    var source: Pair<String, Int?>? = null,
+    val target: Pair<String, Int?>? = null,
+    val source: Pair<String, Int?>? = null,
 ) : CommandItem {
     override val text
-        get() = "Copy value"
+        get() = "Копировать"
 
     override fun invoke(codeItems: SnapshotStateList<CodePeace>) {
         source?.second?.let { sourceIndex ->
@@ -137,9 +150,9 @@ fun MainRow(
 ) {
     val codeItems = remember {
         mutableStateListOf<CodePeace>(
-            CodePeace.IntVariable(name = "a", value = 5),
-            CodePeace.IntVariable(name = "b", value = 10),
-            CodePeace.IntVariable(name = "c", value = null)
+            CodePeace.IntVariable(name = "A", value = 5),
+            CodePeace.IntVariable(name = "B", value = 10),
+            CodePeace.IntVariable(name = "C", value = null)
         )
     }
 
@@ -149,7 +162,7 @@ fun MainRow(
 
     val showVictoryDialog = remember { mutableStateOf(false) }
     val showTryAgainDialog = remember { mutableStateOf(false) }
-    val executingCommandIndex = remember { mutableStateOf<Int?>( null) }
+    val executingCommandIndex = remember { mutableStateOf<Int?>(null) }
     val coroutineScope = rememberCoroutineScope()
 
     Row(
@@ -309,8 +322,43 @@ private fun RowScope.CodeColumn(codeItems: SnapshotStateList<CodePeace>) {
         itemsIndexed(codeItems) { index, item ->
             when (item) {
                 is CodePeace.IntVariable -> {
-                    val prefix = if (item.isMutable) "var" else "val"
-                    Text("$prefix ${item.name} = ${item.value}")
+                    Column {
+                        Box(
+                            modifier = Modifier
+                                .height(20.dp)
+                                .width(25.dp)
+                                .background(Color.White)
+                                .align(Alignment.CenterHorizontally)
+                        ) {
+                            item.value?.let { value ->
+                                Text(
+                                    modifier = Modifier.align(Alignment.Center),
+                                    text = value.toString(),
+                                    color = Color.Black
+                                )
+                            }
+                        }
+                        Box {
+                            Image(
+                                modifier = Modifier.size(40.dp),
+                                painter = painterResource(R.drawable.box),
+                                contentDescription = "Box ${item.name}"
+                            )
+                            Surface(
+                                modifier = Modifier.align(Alignment.Center),
+                                color = Color(0x66000000),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text(
+                                    modifier = Modifier.padding(horizontal = 4.dp),
+                                    text = item.name,
+                                    textAlign = TextAlign.Center,
+                                    color = Color(0xFFFF9900)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
             }
         }
@@ -453,7 +501,6 @@ private fun CopyVariableToVariable.CommandRow(
     val expanded1 = remember { mutableStateOf(false) }
 
     val expanded2 = remember { mutableStateOf(false) }
-    log("index $index isExecuting $isExecuting")
     val backgroundColor = if (isExecuting) Color(0xFFFF9900) else Color(0xFF4CAF50)
 
     Row(
@@ -473,12 +520,12 @@ private fun CopyVariableToVariable.CommandRow(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = "Copy",
+            text = "Копировать",
             color = Color.White,
             modifier = Modifier.padding(vertical = 6.dp)
         )
 
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(8.dp))
 
         // First dropdown
         Box {
@@ -501,7 +548,8 @@ private fun CopyVariableToVariable.CommandRow(
                     DropdownMenuItem(
                         text = { Text(variable.name) },
                         onClick = {
-                            source = variable.name to codeItems.indexOf(variable)
+                            commandItems.removeAt(index)
+                            commandItems.add(index, copy(source = variable.name to codeItems.indexOf(variable)))
                             expanded1.value = false
                         }
                     )
@@ -509,16 +557,18 @@ private fun CopyVariableToVariable.CommandRow(
             }
         }
 
-        Spacer(modifier = Modifier.width(8.dp))
-
+        Spacer(modifier = Modifier.width(4.dp))
 
         Text(
-            text = "to",
+            text = "\u2192",
             color = Color.White,
-            modifier = Modifier.padding(vertical = 6.dp)
+            style = TextStyle(
+                fontWeight = FontWeight.W900,
+                fontSize = 22.sp,
+            )
         )
 
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(4.dp))
 
         // Second dropdown
         Box {
@@ -541,7 +591,8 @@ private fun CopyVariableToVariable.CommandRow(
                     DropdownMenuItem(
                         text = { Text(variable.name) },
                         onClick = {
-                            target = variable.name to codeItems.indexOf(variable)
+                            commandItems.removeAt(index)
+                            commandItems.add(index, copy(target = variable.name to codeItems.indexOf(variable)))
                             expanded2.value = false
                         }
                     )
@@ -667,9 +718,9 @@ private fun resetCodeItems(codeItems: SnapshotStateList<CodePeace>) {
     codeItems.clear()
     codeItems.addAll(
         listOf(
-            CodePeace.IntVariable(name = "a", value = 5),
-            CodePeace.IntVariable(name = "b", value = 10),
-            CodePeace.IntVariable(name = "c", value = null)
+            CodePeace.IntVariable(name = "A", value = 5),
+            CodePeace.IntVariable(name = "B", value = 10),
+            CodePeace.IntVariable(name = "C", value = null)
         )
     )
 }
