@@ -8,6 +8,7 @@ import android.widget.Space
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -49,6 +50,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -73,11 +76,15 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.lemonapes.easyprog.Utils.Companion.log
+import ru.lemonapes.easyprog.android.commands.CommandItem
+import ru.lemonapes.easyprog.android.commands.CopyVariableToVariable
 import kotlin.math.max
 
 private var draggedCommandItem: CommandItem? = null
 
 class MainActivity : ComponentActivity() {
+    private val viewModel: MainViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -91,14 +98,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MyApplicationTheme {
-                val isHovered = remember { mutableStateOf(false) }
-                val itemIndexHovered: MutableState<Int?> = remember { mutableStateOf(null) }
-
                 val globalDragAndDropTarget = remember {
-                    createGlobalDragAndDropTarget(
-                        isHovered = isHovered,
-                        itemIndexHovered = itemIndexHovered,
-                    )
+                    createGlobalDragAndDropTarget(viewModel)
                 }
 
                 Scaffold(
@@ -108,36 +109,9 @@ class MainActivity : ComponentActivity() {
                 ) { paddings ->
                     MainRow(
                         modifier = Modifier.padding(paddings),
-                        isHovered = isHovered,
-                        itemIndexHovered = itemIndexHovered,
+                        viewModel = viewModel,
                     )
                 }
-            }
-        }
-    }
-}
-
-sealed interface CommandItem {
-    val id: Long
-    val text: String
-
-    operator fun invoke(codeItems: SnapshotStateList<CodePeace>)
-}
-
-private data class CopyVariableToVariable(
-    override val id: Long = Calendar.getInstance().timeInMillis,
-    val target: Pair<String, Int?>? = null,
-    val source: Pair<String, Int?>? = null,
-) : CommandItem {
-    override val text
-        get() = "Копировать"
-
-    override fun invoke(codeItems: SnapshotStateList<CodePeace>) {
-        source?.second?.let { sourceIndex ->
-            target?.second?.let { targetIndex ->
-                val sourceItem = codeItems[sourceIndex] as CodePeace.IntVariable
-                val targetItem = codeItems.removeAt(targetIndex) as CodePeace.IntVariable
-                codeItems.add(targetIndex, targetItem.copy(value = sourceItem.value))
             }
         }
     }
@@ -147,25 +121,9 @@ private data class CopyVariableToVariable(
 @Composable
 fun MainRow(
     modifier: Modifier = Modifier,
-    isHovered: MutableState<Boolean>,
-    itemIndexHovered: MutableState<Int?>,
+    viewModel: MainViewModel,
 ) {
-    val codeItems = remember {
-        mutableStateListOf<CodePeace>(
-            CodePeace.IntVariable(name = "A", value = 5),
-            CodePeace.IntVariable(name = "B", value = 10),
-            CodePeace.IntVariable(name = "C", value = null)
-        )
-    }
-
-    val commandItems = remember {
-        mutableStateListOf<CommandItem>()
-    }
-
-    val showVictoryDialog = remember { mutableStateOf(false) }
-    val showTryAgainDialog = remember { mutableStateOf(false) }
-    val executingCommandIndex = remember { mutableStateOf<Int?>(null) }
-    val coroutineScope = rememberCoroutineScope()
+    val viewState by viewModel.viewState.collectAsState()
 
     Row(
         modifier = modifier
@@ -175,54 +133,32 @@ fun MainRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Button(onClick = {
-            if (validateCommands(commandItems)) {
-                coroutineScope.launch {
-                    commandsExecution(
-                        codeItems = codeItems,
-                        commandItems = commandItems,
-                        showVictoryDialog = showVictoryDialog,
-                        showTryAgainDialog = showTryAgainDialog,
-                        executingCommandIndex = executingCommandIndex,
-                    )
-                }
-            }
+            viewModel.executeCommands()
         }) {
             Text("Старт")
         }
     }
 
-    if (showVictoryDialog.value) {
+    if (viewState.showVictoryDialog) {
         AlertDialog(
-            onDismissRequest = {
-                showVictoryDialog.value = false
-                resetCodeItems(codeItems)
-            },
+            onDismissRequest = viewModel::onVictoryDialogDismiss,
             title = { Text("Поздравляем!") },
             text = { Text("Вы победили!") },
             confirmButton = {
-                TextButton(onClick = {
-                    showVictoryDialog.value = false
-                    resetCodeItems(codeItems)
-                }) {
+                TextButton(onClick = viewModel::onVictoryDialogDismiss) {
                     Text("OK")
                 }
             }
         )
     }
 
-    if (showTryAgainDialog.value) {
+    if (viewState.showTryAgainDialog) {
         AlertDialog(
-            onDismissRequest = {
-                showTryAgainDialog.value = false
-                resetCodeItems(codeItems)
-            },
+            onDismissRequest = viewModel::onTryAgainDialogDismiss,
             title = { Text("Попробуйте еще") },
             text = { Text("Условие победы не выполнено") },
             confirmButton = {
-                TextButton(onClick = {
-                    showTryAgainDialog.value = false
-                    resetCodeItems(codeItems)
-                }) {
+                TextButton(onClick = viewModel::onTryAgainDialogDismiss) {
                     Text("OK")
                 }
             }
@@ -236,45 +172,14 @@ fun MainRow(
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        CodeColumn(codeItems)
-        CommandsColumn(isHovered, itemIndexHovered, codeItems, commandItems, executingCommandIndex)
-        SourceColumn()
-    }
-}
-
-private suspend fun commandsExecution(
-    codeItems: SnapshotStateList<CodePeace>,
-    commandItems: SnapshotStateList<CommandItem>,
-    showVictoryDialog: MutableState<Boolean>,
-    showTryAgainDialog: MutableState<Boolean>,
-    executingCommandIndex: MutableState<Int?>,
-) {
-    commandItems.forEachIndexed { index, command ->
-        // Команда становится красной
-        executingCommandIndex.value = index
-        delay(500)
-
-        // Команда выполняется
-        command.invoke(codeItems)
-        delay(500)
-
-        // Команда становится обратно зеленой
-        executingCommandIndex.value = null
-    }
-
-    if (checkVictory(codeItems)) {
-        showVictoryDialog.value = true
-    } else {
-        showTryAgainDialog.value = true
+        CodeColumn(viewState.codeItems)
+        CommandsColumn(viewState, viewModel)
+        SourceColumn(viewState.sourceItems)
     }
 }
 
 @Composable
-private fun RowScope.SourceColumn() {
-    val sourceItems = listOf(
-        CopyVariableToVariable()
-    )
-
+private fun RowScope.SourceColumn(sourceItems: List<CommandItem>) {
     LazyColumn(
         modifier = Modifier
             .fillMaxHeight()
@@ -308,7 +213,7 @@ private fun RowScope.SourceColumn() {
 }
 
 @Composable
-private fun RowScope.CodeColumn(codeItems: SnapshotStateList<CodePeace>) {
+private fun RowScope.CodeColumn(codeItems: List<CodePeace>) {
     LazyColumn(
         modifier = Modifier
             .fillMaxHeight()
@@ -369,20 +274,16 @@ private fun RowScope.CodeColumn(codeItems: SnapshotStateList<CodePeace>) {
 
 @Composable
 private fun RowScope.CommandsColumn(
-    isHovered: MutableState<Boolean>,
-    itemIndexHovered: MutableState<Int?>,
-    codeItems: SnapshotStateList<CodePeace>,
-    commandItems: SnapshotStateList<CommandItem>,
-    executingCommandIndex: MutableState<Int?>,
+    viewState: MainViewState,
+    viewModel: MainViewModel,
 ) {
 
-    val isColumnVisualHovered = isHovered.value && commandItems.isEmpty()
+    val isColumnVisualHovered = viewState.isHovered && viewState.commandItems.isEmpty()
 
     val columnDragAndDropTarget = remember {
         createColumnDragAndDropTarget(
-            isHovered = isHovered,
-            commandItems = commandItems,
-            itemIndexHovered = itemIndexHovered,
+            viewModel = viewModel,
+            commandItems = viewState.commandItems,
         )
     }
     LazyColumn(
@@ -403,7 +304,7 @@ private fun RowScope.CommandsColumn(
             .dragAndDropTextTarget(columnDragAndDropTarget),
         contentPadding = PaddingValues(bottom = 8.dp),
     ) {
-        if (commandItems.isEmpty()) {
+        if (viewState.commandItems.isEmpty()) {
             item {
                 Text(
                     "Колонка для комманд",
@@ -412,7 +313,7 @@ private fun RowScope.CommandsColumn(
                 )
             }
         } else {
-            itemsIndexed(commandItems, key = { _, item -> item.id }) { index, item ->
+            itemsIndexed(viewState.commandItems, key = { _, item -> item.id }) { index, item ->
                 when (item) {
                     is CopyVariableToVariable -> {
                         val topPadding = if (index == 0) 8.dp else 0.dp
@@ -423,7 +324,7 @@ private fun RowScope.CommandsColumn(
                                     .padding(top = topPadding)
                                     .fillMaxWidth()
                             ) {
-                                if (itemIndexHovered.value == index) {
+                                if (viewState.itemIndexHovered == index) {
                                     HorizontalDivider(
                                         modifier = Modifier.padding(vertical = 3.dp),
                                         thickness = 2.dp,
@@ -434,14 +335,14 @@ private fun RowScope.CommandsColumn(
                                 }
                                 when (item) {
                                     is CopyVariableToVariable -> item.CommandRow(
-                                        commandItems = commandItems,
                                         index = index,
-                                        codeItems = codeItems,
-                                        isExecuting = executingCommandIndex.value == index
+                                        codeItems = viewState.codeItems,
+                                        isExecuting = viewState.executingCommandIndex == index,
+                                        viewModel = viewModel
                                     )
                                 }
-                                if (index == commandItems.lastIndex) {
-                                    if ((itemIndexHovered.value ?: -1) > commandItems.lastIndex) {
+                                if (index == viewState.commandItems.lastIndex) {
+                                    if ((viewState.itemIndexHovered ?: -1) > viewState.commandItems.lastIndex) {
                                         HorizontalDivider(
                                             modifier = Modifier.padding(vertical = 3.dp),
                                             thickness = 2.dp,
@@ -459,15 +360,14 @@ private fun RowScope.CommandsColumn(
                                 val topItemDragAndDropTarget = remember(index, item) {
                                     createTopItemDragAndDropTarget(
                                         index = index,
-                                        itemIndexHovered = itemIndexHovered,
-                                        commandItems = commandItems,
+                                        viewModel = viewModel,
                                     )
                                 }
                                 val botItemDragAndDropTarget = remember(index, item) {
                                     createBotItemDragAndDropTarget(
                                         index = index,
-                                        itemIndexHovered = itemIndexHovered,
-                                        commandItems = commandItems,
+                                        viewModel = viewModel,
+                                        commandItems = viewState.commandItems,
                                     )
                                 }
                                 Box(
@@ -493,10 +393,10 @@ private fun RowScope.CommandsColumn(
 
 @Composable
 private fun CopyVariableToVariable.CommandRow(
-    commandItems: SnapshotStateList<CommandItem>,
     index: Int,
-    codeItems: SnapshotStateList<CodePeace>,
+    codeItems: List<CodePeace>,
     isExecuting: Boolean,
+    viewModel: MainViewModel,
 ) {
     val variables = codeItems.filterIsInstance<CodePeace.IntVariable>().map { it }
 
@@ -513,7 +413,7 @@ private fun CopyVariableToVariable.CommandRow(
                 shape = RoundedCornerShape(8.dp)
             )
             .dragAndDropSource { _ ->
-                draggedCommandItem = commandItems.removeAt(index)
+                draggedCommandItem = viewModel.removeCommand(index)
                 DragAndDropTransferData(
                     ClipData.newPlainText("dragged_item", text)
                 )
@@ -550,8 +450,7 @@ private fun CopyVariableToVariable.CommandRow(
                     DropdownMenuItem(
                         text = { Text(variable.name) },
                         onClick = {
-                            commandItems.removeAt(index)
-                            commandItems.add(index, copy(source = variable.name to codeItems.indexOf(variable)))
+                            viewModel.updateCommand(index, copy(source = variable.name to codeItems.indexOf(variable)))
                             expanded1.value = false
                         }
                     )
@@ -593,8 +492,7 @@ private fun CopyVariableToVariable.CommandRow(
                     DropdownMenuItem(
                         text = { Text(variable.name) },
                         onClick = {
-                            commandItems.removeAt(index)
-                            commandItems.add(index, copy(target = variable.name to codeItems.indexOf(variable)))
+                            viewModel.updateCommand(index, copy(target = variable.name to codeItems.indexOf(variable)))
                             expanded2.value = false
                         }
                     )
@@ -616,77 +514,74 @@ private fun Modifier.dragAndDropTextTarget(
 )
 
 private fun createGlobalDragAndDropTarget(
-    isHovered: MutableState<Boolean>,
-    itemIndexHovered: MutableState<Int?>,
+    viewModel: MainViewModel,
 ): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            itemIndexHovered.value = null
+            viewModel.setItemIndexHovered(null)
             return false
         }
 
         override fun onEntered(event: DragAndDropEvent) {
             log("Global onEntered")
-            isHovered.value = false
-            itemIndexHovered.value = null
+            viewModel.setHovered(false)
+            viewModel.setItemIndexHovered(null)
         }
     }
 }
 
 private fun createColumnDragAndDropTarget(
-    isHovered: MutableState<Boolean>,
-    commandItems: MutableList<CommandItem>,
-    itemIndexHovered: MutableState<Int?>,
+    viewModel: MainViewModel,
+    commandItems: List<CommandItem>,
 ): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            event.toItem()?.let { item -> commandItems.add(item) }
-            isHovered.value = false
-            itemIndexHovered.value = null
+            event.toItem()?.let { item -> viewModel.addCommand(item) }
+            viewModel.setHovered(false)
+            viewModel.setItemIndexHovered(null)
             return true
         }
 
         override fun onEntered(event: DragAndDropEvent) {
             log("Column onEntered")
-            itemIndexHovered.value = commandItems.lastIndex + 1
-            isHovered.value = true
+            viewModel.setItemIndexHovered(commandItems.lastIndex + 1)
+            viewModel.setHovered(true)
         }
     }
 }
 
 private fun createTopItemDragAndDropTarget(
     index: Int,
-    itemIndexHovered: MutableState<Int?>,
-    commandItems: MutableList<CommandItem>,
+    viewModel: MainViewModel,
 ): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            event.toItem()?.let { item -> commandItems.add(index, item) }
-            itemIndexHovered.value = null
+            event.toItem()?.let { item -> viewModel.addCommandAtIndex(index, item) }
+            viewModel.setItemIndexHovered(null)
             return true
         }
 
         override fun onEntered(event: DragAndDropEvent) {
-            itemIndexHovered.value = index
+            viewModel.setItemIndexHovered(index)
         }
     }
 }
 
 private fun createBotItemDragAndDropTarget(
     index: Int,
-    itemIndexHovered: MutableState<Int?>,
-    commandItems: MutableList<CommandItem>,
+    viewModel: MainViewModel,
+    commandItems: List<CommandItem>,
 ): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            event.toItem()?.let { item -> commandItems.add(max(index + 1, commandItems.lastIndex), item) }
-            itemIndexHovered.value = null
+            event.toItem()?.let { item -> viewModel.addCommandAtIndex(max(index + 1, commandItems.lastIndex), item) }
+            viewModel.setItemIndexHovered(null)
             return true
         }
 
         override fun onEntered(event: DragAndDropEvent) {
             log("item $index onEntered")
-            itemIndexHovered.value = index + 1
+            viewModel.setItemIndexHovered(index + 1)
         }
     }
 }
@@ -705,30 +600,4 @@ private fun DragAndDropEvent.toItem(): CommandItem? {
     }
 }
 
-private fun checkVictory(codeItems: SnapshotStateList<CodePeace>): Boolean {
-    val firstVariable = codeItems[0] as? CodePeace.IntVariable
-    val secondVariable = codeItems[1] as? CodePeace.IntVariable
-
-    return firstVariable?.value == 10 && secondVariable?.value == 5
-}
-
-private fun validateCommands(commandItems: SnapshotStateList<CommandItem>): Boolean {
-    return commandItems.all { command ->
-        when (command) {
-            is CopyVariableToVariable -> command.source != null && command.target != null
-            else -> true
-        }
-    }
-}
-
-private fun resetCodeItems(codeItems: SnapshotStateList<CodePeace>) {
-    codeItems.clear()
-    codeItems.addAll(
-        listOf(
-            CodePeace.IntVariable(name = "A", value = 5),
-            CodePeace.IntVariable(name = "B", value = 10),
-            CodePeace.IntVariable(name = "C", value = null)
-        )
-    )
-}
 
