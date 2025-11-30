@@ -1,8 +1,9 @@
 package ru.lemonapes.easyprog.android
 
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,28 +17,35 @@ class MainViewModel : ViewModel() {
 
     private val _viewState = MutableStateFlow(
         MainViewState(
-            codeItems = listOf(
+            codeItems = persistentListOf(
                 CodePeace.IntVariable(name = "A", value = 5),
                 CodePeace.IntVariable(name = "B", value = 10),
                 CodePeace.IntVariable(name = "C", value = null)
             ),
-            sourceItems = listOf(
+            sourceItems = persistentListOf(
                 CopyVariableToVariable()
-            )
+            ),
         )
     )
     val viewState: StateFlow<MainViewState> = _viewState.asStateFlow()
 
+    private val _draggedCommandItem = MutableStateFlow<CommandItem?>(null)
+    val draggedCommandItem: StateFlow<CommandItem?> = _draggedCommandItem.asStateFlow()
+
+    fun setDraggedCommandItem(item: CommandItem?) {
+        _draggedCommandItem.value = item
+    }
+
     // Управление командами
     fun addCommand(command: CommandItem) {
-        _viewState.update { it.copy(commandItems = it.commandItems + command) }
+        _viewState.update { it.copy(commandItems = (it.commandItems + command).toImmutableList()) }
     }
 
     fun addCommandAtIndex(index: Int, command: CommandItem) {
         _viewState.update {
             val newList = it.commandItems.toMutableList()
             newList.add(index, command)
-            it.copy(commandItems = newList)
+            it.copy(commandItems = newList.toImmutableList())
         }
     }
 
@@ -46,7 +54,7 @@ class MainViewModel : ViewModel() {
         _viewState.update {
             val newList = it.commandItems.toMutableList()
             removedItem = newList.removeAt(index)
-            it.copy(commandItems = newList)
+            it.copy(commandItems = newList.toImmutableList())
         }
         return removedItem
     }
@@ -55,7 +63,7 @@ class MainViewModel : ViewModel() {
         _viewState.update {
             val newList = it.commandItems.toMutableList()
             newList[index] = command
-            it.copy(commandItems = newList)
+            it.copy(commandItems = newList.toImmutableList())
         }
     }
 
@@ -64,14 +72,14 @@ class MainViewModel : ViewModel() {
         _viewState.update {
             val newList = it.codeItems.toMutableList()
             newList[index] = item
-            it.copy(codeItems = newList)
+            it.copy(codeItems = newList.toImmutableList())
         }
     }
 
     fun resetCodeItems() {
         _viewState.update {
             it.copy(
-                codeItems = listOf(
+                codeItems = persistentListOf(
                     CodePeace.IntVariable(name = "A", value = 5),
                     CodePeace.IntVariable(name = "B", value = 10),
                     CodePeace.IntVariable(name = "C", value = null)
@@ -123,7 +131,7 @@ class MainViewModel : ViewModel() {
                 delay(500)
 
                 // Команда выполняется и обновляет состояние
-                val newCodeItems = command( _viewState.value.codeItems)
+                val newCodeItems = command(_viewState.value.codeItems).toImmutableList()
                 _viewState.update { it.copy(codeItems = newCodeItems) }
                 delay(500)
 

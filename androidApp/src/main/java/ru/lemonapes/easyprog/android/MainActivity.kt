@@ -2,16 +2,11 @@ package ru.lemonapes.easyprog.android
 
 import android.content.ClipData
 import android.content.ClipDescription
-import android.icu.util.Calendar
 import android.os.Bundle
-import android.widget.Space
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,7 +14,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
-import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,7 +21,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,38 +42,32 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
-import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Red
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import ru.lemonapes.easyprog.Utils.Companion.log
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import ru.lemonapes.easyprog.android.commands.CommandItem
 import ru.lemonapes.easyprog.android.commands.CopyVariableToVariable
-import kotlin.math.max
-
-private var draggedCommandItem: CommandItem? = null
+import ru.lemonapes.easyprog.android.drag_and_drop_target.createBotItemDragAndDropTarget
+import ru.lemonapes.easyprog.android.drag_and_drop_target.createColumnDragAndDropTarget
+import ru.lemonapes.easyprog.android.drag_and_drop_target.createGlobalDragAndDropTarget
+import ru.lemonapes.easyprog.android.drag_and_drop_target.createTopItemDragAndDropTarget
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -277,13 +264,13 @@ private fun RowScope.CommandsColumn(
     viewState: MainViewState,
     viewModel: MainViewModel,
 ) {
-
     val isColumnVisualHovered = viewState.isHovered && viewState.commandItems.isEmpty()
 
     val columnDragAndDropTarget = remember {
         createColumnDragAndDropTarget(
             viewModel = viewModel,
             commandItems = viewState.commandItems,
+            draggedCommandItem = viewModel.draggedCommandItem
         )
     }
     LazyColumn(
@@ -361,6 +348,7 @@ private fun RowScope.CommandsColumn(
                                     createTopItemDragAndDropTarget(
                                         index = index,
                                         viewModel = viewModel,
+                                        draggedCommandItem = viewModel.draggedCommandItem
                                     )
                                 }
                                 val botItemDragAndDropTarget = remember(index, item) {
@@ -368,6 +356,7 @@ private fun RowScope.CommandsColumn(
                                         index = index,
                                         viewModel = viewModel,
                                         commandItems = viewState.commandItems,
+                                        draggedCommandItem = viewModel.draggedCommandItem,
                                     )
                                 }
                                 Box(
@@ -413,7 +402,7 @@ private fun CopyVariableToVariable.CommandRow(
                 shape = RoundedCornerShape(8.dp)
             )
             .dragAndDropSource { _ ->
-                draggedCommandItem = viewModel.removeCommand(index)
+                viewModel.setDraggedCommandItem(viewModel.removeCommand(index))
                 DragAndDropTransferData(
                     ClipData.newPlainText("dragged_item", text)
                 )
@@ -512,92 +501,3 @@ private fun Modifier.dragAndDropTextTarget(
     },
     target = target
 )
-
-private fun createGlobalDragAndDropTarget(
-    viewModel: MainViewModel,
-): DragAndDropTarget {
-    return object : DragAndDropTarget {
-        override fun onDrop(event: DragAndDropEvent): Boolean {
-            viewModel.setItemIndexHovered(null)
-            return false
-        }
-
-        override fun onEntered(event: DragAndDropEvent) {
-            log("Global onEntered")
-            viewModel.setHovered(false)
-            viewModel.setItemIndexHovered(null)
-        }
-    }
-}
-
-private fun createColumnDragAndDropTarget(
-    viewModel: MainViewModel,
-    commandItems: List<CommandItem>,
-): DragAndDropTarget {
-    return object : DragAndDropTarget {
-        override fun onDrop(event: DragAndDropEvent): Boolean {
-            event.toItem()?.let { item -> viewModel.addCommand(item) }
-            viewModel.setHovered(false)
-            viewModel.setItemIndexHovered(null)
-            return true
-        }
-
-        override fun onEntered(event: DragAndDropEvent) {
-            log("Column onEntered")
-            viewModel.setItemIndexHovered(commandItems.lastIndex + 1)
-            viewModel.setHovered(true)
-        }
-    }
-}
-
-private fun createTopItemDragAndDropTarget(
-    index: Int,
-    viewModel: MainViewModel,
-): DragAndDropTarget {
-    return object : DragAndDropTarget {
-        override fun onDrop(event: DragAndDropEvent): Boolean {
-            event.toItem()?.let { item -> viewModel.addCommandAtIndex(index, item) }
-            viewModel.setItemIndexHovered(null)
-            return true
-        }
-
-        override fun onEntered(event: DragAndDropEvent) {
-            viewModel.setItemIndexHovered(index)
-        }
-    }
-}
-
-private fun createBotItemDragAndDropTarget(
-    index: Int,
-    viewModel: MainViewModel,
-    commandItems: List<CommandItem>,
-): DragAndDropTarget {
-    return object : DragAndDropTarget {
-        override fun onDrop(event: DragAndDropEvent): Boolean {
-            event.toItem()?.let { item -> viewModel.addCommandAtIndex(max(index + 1, commandItems.lastIndex), item) }
-            viewModel.setItemIndexHovered(null)
-            return true
-        }
-
-        override fun onEntered(event: DragAndDropEvent) {
-            log("item $index onEntered")
-            viewModel.setItemIndexHovered(index + 1)
-        }
-    }
-}
-
-private fun DragAndDropEvent.toItem(): CommandItem? {
-    val label = toAndroidDragEvent()
-        .clipData
-        ?.description
-        ?.label
-        ?.toString()
-
-    return when (label) {
-        "adding_item" -> CopyVariableToVariable()
-        "dragged_item" -> draggedCommandItem
-        else -> null
-    }
-}
-
-
