@@ -57,13 +57,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow.Companion.Ellipsis
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import ru.lemonapes.easyprog.android.commands.CommandItem
-import ru.lemonapes.easyprog.android.commands.CopyVariableToVariable
+import ru.lemonapes.easyprog.android.commands.CopyValueCommand
+import ru.lemonapes.easyprog.android.commands.MoveValueCommand
+import ru.lemonapes.easyprog.android.commands.TwoVariableCommand
 import ru.lemonapes.easyprog.android.drag_and_drop_target.createBotItemDragAndDropTarget
 import ru.lemonapes.easyprog.android.drag_and_drop_target.createColumnDragAndDropTarget
 import ru.lemonapes.easyprog.android.drag_and_drop_target.createGlobalDragAndDropTarget
@@ -161,12 +164,12 @@ fun MainRow(
     ) {
         CodeColumn(viewState.codeItems)
         CommandsColumn(viewState, viewModel)
-        SourceColumn(viewState.sourceItems)
+        SourceColumn(viewModel, viewState.sourceItems)
     }
 }
 
 @Composable
-private fun RowScope.SourceColumn(sourceItems: List<CommandItem>) {
+private fun RowScope.SourceColumn(viewModel: MainViewModel, sourceItems: List<CommandItem>) {
     LazyColumn(
         modifier = Modifier
             .fillMaxHeight()
@@ -184,6 +187,7 @@ private fun RowScope.SourceColumn(sourceItems: List<CommandItem>) {
                 text = item.text,
                 modifier = Modifier
                     .dragAndDropSource { _ ->
+                        viewModel.setDraggedCommandItem(item.mkCopy())
                         DragAndDropTransferData(
                             ClipData.newPlainText("adding_item", item.text)
                         )
@@ -217,11 +221,12 @@ private fun RowScope.CodeColumn(codeItems: List<CodePeace>) {
             when (item) {
                 is CodePeace.IntVariable -> {
                     Column {
+                        val boxBackground = if (item.value == null) Color.Transparent else Color.White
                         Box(
                             modifier = Modifier
                                 .height(20.dp)
                                 .width(25.dp)
-                                .background(Color.White)
+                                .background(boxBackground)
                                 .align(Alignment.CenterHorizontally)
                         ) {
                             item.value?.let { value ->
@@ -295,76 +300,79 @@ private fun RowScope.CommandsColumn(
             }
         } else {
             itemsIndexed(viewState.commandItems, key = { _, item -> item.stateId }) { index, item ->
-                when (item) {
-                    is CopyVariableToVariable -> {
-                        val topPadding = if (index == 0) 8.dp else 0.dp
+                val topPadding = if (index == 0) 8.dp else 0.dp
 
-                        Box {
-                            Column(
-                                modifier = Modifier
-                                    .padding(top = topPadding)
-                                    .fillMaxWidth()
-                            ) {
-                                if (viewState.itemIndexHovered == index) {
-                                    HorizontalDivider(
-                                        modifier = Modifier.padding(vertical = 3.dp),
-                                        thickness = 2.dp,
-                                        color = Red
-                                    )
-                                } else {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                }
-                                when (item) {
-                                    is CopyVariableToVariable -> item.CommandRow(
-                                        index = index,
-                                        codeItems = viewState.codeItems,
-                                        isExecuting = viewState.executingCommandIndex == index,
-                                        viewModel = viewModel
-                                    )
-                                }
-                                if (index == viewState.commandItems.lastIndex) {
-                                    if ((viewState.itemIndexHovered ?: -1) > viewState.commandItems.lastIndex) {
-                                        HorizontalDivider(
-                                            modifier = Modifier.padding(vertical = 3.dp),
-                                            thickness = 2.dp,
-                                            color = Red
-                                        )
-                                    } else {
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                    }
-                                }
-                            }
-                            Column(
-                                modifier = Modifier
-                                    .matchParentSize()
-                            ) {
-                                val topItemDragAndDropTarget = remember(index, item) {
-                                    viewModel.createTopItemDragAndDropTarget(
-                                        index = index,
-                                    )
-                                }
-                                val botItemDragAndDropTarget = remember(index, item) {
-                                    createBotItemDragAndDropTarget(
-                                        index = index,
-                                        viewModel = viewModel,
-                                        commandItems = viewState.commandItems,
-                                        draggedCommandItem = viewModel.draggedCommandItem,
-                                    )
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .weight(1f)
-                                        .dragAndDropTextTarget(topItemDragAndDropTarget)
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .padding(top = topPadding)
+                            .fillMaxWidth()
+                    ) {
+                        if (viewState.itemIndexHovered == index) {
+                            HorizontalDivider(
+                                modifier = Modifier.padding(vertical = 3.dp),
+                                thickness = 2.dp,
+                                color = Red
+                            )
+                        } else {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                        when (item) {
+                            is CopyValueCommand -> item.CommandRow(
+                                index = index,
+                                codeItems = viewState.codeItems,
+                                isExecuting = viewState.executingCommandIndex == index,
+                                viewModel = viewModel
+                            )
+
+                            is MoveValueCommand -> item.CommandRow(
+                                index = index,
+                                codeItems = viewState.codeItems,
+                                isExecuting = viewState.executingCommandIndex == index,
+                                viewModel = viewModel
+                            )
+                        }
+                        if (index == viewState.commandItems.lastIndex) {
+                            if ((viewState.itemIndexHovered ?: -1) > viewState.commandItems.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(vertical = 3.dp),
+                                    thickness = 2.dp,
+                                    color = Red
                                 )
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .weight(1f)
-                                        .dragAndDropTextTarget(botItemDragAndDropTarget)
-                                )
+                            } else {
+                                Spacer(modifier = Modifier.height(8.dp))
                             }
                         }
+                    }
+                    Column(
+                        modifier = Modifier
+                            .matchParentSize()
+                    ) {
+                        val topItemDragAndDropTarget = remember(index, item) {
+                            viewModel.createTopItemDragAndDropTarget(
+                                index = index,
+                            )
+                        }
+                        val botItemDragAndDropTarget = remember(index, item) {
+                            createBotItemDragAndDropTarget(
+                                index = index,
+                                viewModel = viewModel,
+                                commandItems = viewState.commandItems,
+                                draggedCommandItem = viewModel.draggedCommandItem,
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .dragAndDropTextTarget(topItemDragAndDropTarget)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .dragAndDropTextTarget(botItemDragAndDropTarget)
+                        )
                     }
                 }
             }
@@ -373,7 +381,7 @@ private fun RowScope.CommandsColumn(
 }
 
 @Composable
-private fun CopyVariableToVariable.CommandRow(
+private fun TwoVariableCommand.CommandRow(
     index: Int,
     codeItems: List<CodePeace>,
     isExecuting: Boolean,
@@ -388,6 +396,7 @@ private fun CopyVariableToVariable.CommandRow(
 
     Row(
         modifier = Modifier
+            .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .background(
                 color = backgroundColor,
@@ -403,9 +412,13 @@ private fun CopyVariableToVariable.CommandRow(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = "Копировать",
+            text = text,
             color = Color.White,
-            modifier = Modifier.padding(vertical = 6.dp)
+            modifier = Modifier
+                .padding(vertical = 6.dp)
+                .weight(1f),
+            overflow = Ellipsis,
+            maxLines = 1,
         )
 
         Spacer(modifier = Modifier.width(8.dp))
@@ -431,7 +444,17 @@ private fun CopyVariableToVariable.CommandRow(
                     DropdownMenuItem(
                         text = { Text(variable.name) },
                         onClick = {
-                            viewModel.updateCommand(index, copy(source = variable.name to codeItems.indexOf(variable)))
+                            when (this@CommandRow) {
+                                is MoveValueCommand -> viewModel.updateCommand(
+                                    index,
+                                    copy(source = variable.name to codeItems.indexOf(variable))
+                                )
+
+                                is CopyValueCommand -> viewModel.updateCommand(
+                                    index,
+                                    copy(source = variable.name to codeItems.indexOf(variable))
+                                )
+                            }
                             expanded1.value = false
                         }
                     )
@@ -473,7 +496,17 @@ private fun CopyVariableToVariable.CommandRow(
                     DropdownMenuItem(
                         text = { Text(variable.name) },
                         onClick = {
-                            viewModel.updateCommand(index, copy(target = variable.name to codeItems.indexOf(variable)))
+                            when (this@CommandRow) {
+                                is CopyValueCommand -> viewModel.updateCommand(
+                                    index,
+                                    copy(target = variable.name to codeItems.indexOf(variable))
+                                )
+
+                                is MoveValueCommand -> viewModel.updateCommand(
+                                    index,
+                                    copy(target = variable.name to codeItems.indexOf(variable))
+                                )
+                            }
                             expanded2.value = false
                         }
                     )

@@ -1,11 +1,15 @@
 package ru.lemonapes.easyprog.android.commands
 
+import androidx.compose.runtime.Immutable
+import kotlinx.collections.immutable.ImmutableList
 import ru.lemonapes.easyprog.android.CodePeace
 
+@Immutable
 sealed interface CommandItem {
     val id: Long
     val text: String
 
     val stateId: String
-    operator fun invoke(codeItems: List<CodePeace>): List<CodePeace>
+    fun mkCopy(): CommandItem
+    operator fun invoke(codeItems: ImmutableList<CodePeace>): ImmutableList<CodePeace>
 }

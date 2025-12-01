@@ -11,7 +11,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.lemonapes.easyprog.android.commands.CommandItem
-import ru.lemonapes.easyprog.android.commands.CopyVariableToVariable
+import ru.lemonapes.easyprog.android.commands.CopyValueCommand
+import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 
 class MainViewModel : ViewModel() {
 
@@ -23,7 +24,8 @@ class MainViewModel : ViewModel() {
                 CodePeace.IntVariable(name = "C", value = null)
             ),
             sourceItems = persistentListOf(
-                CopyVariableToVariable()
+                MoveValueCommand(),
+                CopyValueCommand()
             ),
         )
     )
@@ -131,7 +133,7 @@ class MainViewModel : ViewModel() {
                 delay(500)
 
                 // Команда выполняется и обновляет состояние
-                val newCodeItems = command(_viewState.value.codeItems).toImmutableList()
+                val newCodeItems = command(_viewState.value.codeItems)
                 _viewState.update { it.copy(codeItems = newCodeItems) }
                 delay(500)
 
@@ -159,7 +161,7 @@ class MainViewModel : ViewModel() {
     private fun validateCommands(): Boolean {
         return _viewState.value.commandItems.all { command ->
             when (command) {
-                is CopyVariableToVariable -> command.source != null && command.target != null
+                is CopyValueCommand -> command.source != null && command.target != null
                 else -> true
             }
         }
