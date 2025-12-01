@@ -51,8 +51,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Red
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -414,19 +417,42 @@ private fun TwoVariableCommand.CommandRow(
                 )
             }
             .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            text = text,
-            color = Color.White,
-            modifier = Modifier
-                .padding(vertical = 6.dp)
-                .weight(1f),
-            overflow = Ellipsis,
-            maxLines = 1,
-        )
+        Spacer(modifier = Modifier.weight(0.7f))
+        when (this@CommandRow) {
+            is CopyValueCommand ->
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFF2E7D32))
 
-        Spacer(modifier = Modifier.width(8.dp))
+                ) {
+                    Box(Modifier.padding(vertical = 4.dp, horizontal = 8.dp)) {
+                        Image(
+                            modifier = Modifier.size(24.dp),
+                            painter = painterResource(R.drawable.copy),
+                            contentDescription = "Copy command"
+                        )
+                    }
+                }
+
+            is MoveValueCommand ->
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFF2E7D32))
+                ) {
+                    Box(Modifier.padding(vertical = 4.dp, horizontal = 8.dp)) {
+                        Image(
+                            modifier = Modifier.size(24.dp),
+                            painter = painterResource(R.drawable.cut),
+                            contentDescription = "Cut command"
+                        )
+                    }
+                }
+        }
+
+        Spacer(modifier = Modifier.weight(0.5f))
 
         // First dropdown
         Box(Modifier.clickable { expanded1.value = true }) {
@@ -441,7 +467,8 @@ private fun TwoVariableCommand.CommandRow(
                     .background(
                         color = Color(0xFF2E7D32),
                         shape = RoundedCornerShape(4.dp)
-                    )) {
+                    )
+            ) {
                 Text(
                     text = source?.first ?: "?",
                     color = Color.White,
@@ -543,6 +570,7 @@ private fun TwoVariableCommand.CommandRow(
                 }
             }
         }
+        Spacer(modifier = Modifier.weight(0.7f))
     }
 }
 
