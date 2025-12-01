@@ -8,23 +8,19 @@ import ru.lemonapes.easyprog.android.MainViewModel
 import ru.lemonapes.easyprog.android.commands.CommandItem
 import ru.lemonapes.easyprog.android.toItem
 
-fun createColumnDragAndDropTarget(
-    viewModel: MainViewModel,
-    commandItems: List<CommandItem>,
-    draggedCommandItem: StateFlow<CommandItem?>,
-): DragAndDropTarget {
+fun MainViewModel.createColumnDragAndDropTarget(): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            event.toItem(draggedCommandItem.value)?.let { item -> viewModel.addCommand(item) }
-            viewModel.setHovered(false)
-            viewModel.setItemIndexHovered(null)
+            event.toItem(draggedCommandItem.value)?.let { item -> addCommand(item) }
+            setHovered(false)
+            setItemIndexHovered(null)
             return true
         }
 
         override fun onEntered(event: DragAndDropEvent) {
             log("Column onEntered")
-            viewModel.setItemIndexHovered(commandItems.lastIndex + 1)
-            viewModel.setHovered(true)
+            setItemIndexHovered(viewState.value.commandItems.lastIndex + 1)
+            setHovered(true)
         }
     }
 }

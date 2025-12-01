@@ -10,6 +10,8 @@ data class CopyVariableToVariable(
 ) : CommandItem {
     override val text
         get() = "Копировать"
+    override val stateId: String
+        get() = toString()
 
     override fun invoke(codeItems: List<CodePeace>): List<CodePeace> {
         val newCodeItems = codeItems.toMutableList()

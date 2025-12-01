@@ -5,19 +5,17 @@ import androidx.compose.ui.draganddrop.DragAndDropTarget
 import ru.lemonapes.easyprog.Utils.Companion.log
 import ru.lemonapes.easyprog.android.MainViewModel
 
-fun createGlobalDragAndDropTarget(
-    viewModel: MainViewModel,
-): DragAndDropTarget {
+fun MainViewModel.createGlobalDragAndDropTarget(): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            viewModel.setItemIndexHovered(null)
+            setItemIndexHovered(null)
             return false
         }
 
         override fun onEntered(event: DragAndDropEvent) {
             log("Global onEntered")
-            viewModel.setHovered(false)
-            viewModel.setItemIndexHovered(null)
+            setHovered(false)
+            setItemIndexHovered(null)
         }
     }
 }

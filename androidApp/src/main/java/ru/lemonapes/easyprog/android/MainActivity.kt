@@ -86,7 +86,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyApplicationTheme {
                 val globalDragAndDropTarget = remember {
-                    createGlobalDragAndDropTarget(viewModel)
+                    viewModel.createGlobalDragAndDropTarget()
                 }
 
                 Scaffold(
@@ -266,13 +266,7 @@ private fun RowScope.CommandsColumn(
 ) {
     val isColumnVisualHovered = viewState.isHovered && viewState.commandItems.isEmpty()
 
-    val columnDragAndDropTarget = remember {
-        createColumnDragAndDropTarget(
-            viewModel = viewModel,
-            commandItems = viewState.commandItems,
-            draggedCommandItem = viewModel.draggedCommandItem
-        )
-    }
+    val columnDragAndDropTarget = remember(viewModel) { viewModel.createColumnDragAndDropTarget() }
     LazyColumn(
         modifier = Modifier
             .fillMaxHeight()
@@ -300,7 +294,7 @@ private fun RowScope.CommandsColumn(
                 )
             }
         } else {
-            itemsIndexed(viewState.commandItems, key = { _, item -> item.id }) { index, item ->
+            itemsIndexed(viewState.commandItems, key = { _, item -> item.stateId }) { index, item ->
                 when (item) {
                     is CopyVariableToVariable -> {
                         val topPadding = if (index == 0) 8.dp else 0.dp
@@ -345,10 +339,8 @@ private fun RowScope.CommandsColumn(
                                     .matchParentSize()
                             ) {
                                 val topItemDragAndDropTarget = remember(index, item) {
-                                    createTopItemDragAndDropTarget(
+                                    viewModel.createTopItemDragAndDropTarget(
                                         index = index,
-                                        viewModel = viewModel,
-                                        draggedCommandItem = viewModel.draggedCommandItem
                                     )
                                 }
                                 val botItemDragAndDropTarget = remember(index, item) {

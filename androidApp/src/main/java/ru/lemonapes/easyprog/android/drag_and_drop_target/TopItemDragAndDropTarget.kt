@@ -7,20 +7,18 @@ import ru.lemonapes.easyprog.android.MainViewModel
 import ru.lemonapes.easyprog.android.commands.CommandItem
 import ru.lemonapes.easyprog.android.toItem
 
-fun createTopItemDragAndDropTarget(
+fun MainViewModel.createTopItemDragAndDropTarget(
     index: Int,
-    viewModel: MainViewModel,
-    draggedCommandItem: StateFlow<CommandItem?>
 ): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            event.toItem(draggedCommandItem.value)?.let { item -> viewModel.addCommandAtIndex(index, item) }
-            viewModel.setItemIndexHovered(null)
+            event.toItem(draggedCommandItem.value)?.let { item -> addCommandAtIndex(index, item) }
+            setItemIndexHovered(null)
             return true
         }
 
         override fun onEntered(event: DragAndDropEvent) {
-            viewModel.setItemIndexHovered(index)
+            setItemIndexHovered(index)
         }
     }
 }
