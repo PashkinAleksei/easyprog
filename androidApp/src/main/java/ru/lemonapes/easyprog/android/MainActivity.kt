@@ -237,29 +237,34 @@ private fun RowScope.CodeColumn(codeItems: List<CodePeace>) {
                                 )
                             }
                         }
-                        Box {
-                            Image(
-                                modifier = Modifier.size(40.dp),
-                                painter = painterResource(R.drawable.box),
-                                contentDescription = "Box ${item.name}"
-                            )
-                            Surface(
-                                modifier = Modifier.align(Alignment.Center),
-                                color = Color(0x66000000),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    modifier = Modifier.padding(horizontal = 4.dp),
-                                    text = item.name,
-                                    textAlign = TextAlign.Center,
-                                    color = Color(0xFFFF9900)
-                                )
-                            }
-                        }
+                        item.VariableBox(Modifier.size(40.dp))
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun CodePeace.IntVariable.VariableBox(modifier: Modifier = Modifier) {
+    Box {
+        Image(
+            modifier = modifier,
+            painter = painterResource(R.drawable.box),
+            contentDescription = "Box $name"
+        )
+        Surface(
+            modifier = Modifier.align(Alignment.Center),
+            color = Color(0x66000000),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(
+                modifier = Modifier.padding(horizontal = 4.dp),
+                text = name,
+                textAlign = TextAlign.Center,
+                color = Color(0xFFFF9900)
+            )
         }
     }
 }
@@ -424,18 +429,32 @@ private fun TwoVariableCommand.CommandRow(
         Spacer(modifier = Modifier.width(8.dp))
 
         // First dropdown
-        Box {
-            Text(
-                text = source?.first ?: "?",
-                color = Color.White,
+        Box(Modifier.clickable { expanded1.value = true }) {
+            source?.second?.let { index ->
+                val codePeace = codeItems[index]
+                if (codePeace is CodePeace.IntVariable) {
+                    codePeace.VariableBox(Modifier.size(32.dp))
+                } else null
+            } ?: Box(
                 modifier = Modifier
+                    .size(32.dp)
                     .background(
                         color = Color(0xFF2E7D32),
                         shape = RoundedCornerShape(4.dp)
-                    )
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-                    .clickable { expanded1.value = true }
-            )
+                    )) {
+                Text(
+                    text = source?.first ?: "?",
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = Color(0xFF2E7D32),
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .align(Alignment.Center)
+                )
+            }
             DropdownMenu(
                 expanded = expanded1.value,
                 onDismissRequest = { expanded1.value = false }
@@ -476,18 +495,29 @@ private fun TwoVariableCommand.CommandRow(
         Spacer(modifier = Modifier.width(4.dp))
 
         // Second dropdown
-        Box {
-            Text(
-                text = target?.first ?: "?",
-                color = Color.White,
+        Box(Modifier.clickable { expanded2.value = true }) {
+            target?.second?.let { index ->
+                val codePeace = codeItems[index]
+                if (codePeace is CodePeace.IntVariable) {
+                    codePeace.VariableBox(Modifier.size(32.dp))
+                } else null
+            } ?: Box(
                 modifier = Modifier
+                    .size(32.dp)
                     .background(
                         color = Color(0xFF2E7D32),
                         shape = RoundedCornerShape(4.dp)
                     )
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-                    .clickable { expanded2.value = true }
-            )
+                    .clickable { expanded2.value = true }) {
+                Text(
+                    text = target?.first ?: "?",
+                    textAlign = TextAlign.Center,
+                    color = Color.White,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.Center)
+                )
+            }
             DropdownMenu(
                 expanded = expanded2.value,
                 onDismissRequest = { expanded2.value = false }
