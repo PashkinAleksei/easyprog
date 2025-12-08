@@ -16,6 +16,7 @@ object AppDimensions {
     val padding12 = 12.dp
     val padding32 = 32.dp
 
+    val sourceCodeIconSize = 32.dp
     val codeVariableBoxSize = 40.dp
     val commandVariableBoxSize = 32.dp
     val variableValueHeight = 20.dp

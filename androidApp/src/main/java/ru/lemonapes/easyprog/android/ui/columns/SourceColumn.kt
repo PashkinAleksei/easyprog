@@ -23,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import ru.lemonapes.easyprog.android.MainViewModel
 import ru.lemonapes.easyprog.android.R
 import ru.lemonapes.easyprog.android.commands.CommandItem
@@ -53,7 +52,6 @@ fun RowScope.SourceColumn(viewModel: MainViewModel, sourceItems: List<CommandIte
         items(sourceItems) { item ->
             Box(
                 modifier = Modifier
-                    .aspectRatio(1f)
                     .dragAndDropSource { _ ->
                         viewModel.setDraggedCommandItem(item.mkCopy())
                         DragAndDropTransferData(
@@ -73,7 +71,7 @@ fun RowScope.SourceColumn(viewModel: MainViewModel, sourceItems: List<CommandIte
                 }
 
                 Image(
-                    modifier = Modifier.size(32.dp),
+                    modifier = Modifier.size(AppDimensions.sourceCodeIconSize),
                     painter = painterResource(iconRes),
                     contentDescription = item.text,
                     colorFilter = ColorFilter.tint(AppColors.CommandAccent)

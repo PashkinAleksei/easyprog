@@ -11,8 +11,9 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -26,7 +27,8 @@ import ru.lemonapes.easyprog.android.ui.theme.AppShapes
 
 @Composable
 fun RowScope.CodeColumn(codeItems: List<CodePeace>) {
-    LazyColumn(
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(5),
         modifier = Modifier
             .fillMaxHeight()
             .weight(1.2f)
@@ -36,20 +38,22 @@ fun RowScope.CodeColumn(codeItems: List<CodePeace>) {
                 shape = AppShapes.cornerMedium
             ),
         contentPadding = PaddingValues(AppDimensions.padding16),
-        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing8)
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing8),
+        horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing8)
     ) {
 
         itemsIndexed(codeItems) { index, item ->
             when (item) {
                 is CodePeace.IntVariable -> {
-                    Column {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         val boxBackground = if (item.value == null) AppColors.BackgroundTransparent else AppColors.BackgroundWhite
                         Box(
                             modifier = Modifier
                                 .height(AppDimensions.variableValueHeight)
                                 .width(AppDimensions.variableValueWidth)
                                 .background(boxBackground)
-                                .align(Alignment.CenterHorizontally)
                         ) {
                             item.value?.let { value ->
                                 Text(
