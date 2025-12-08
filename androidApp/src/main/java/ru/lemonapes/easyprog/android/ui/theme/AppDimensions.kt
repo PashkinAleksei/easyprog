@@ -1,7 +1,6 @@
 package ru.lemonapes.easyprog.android.ui.theme
 
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 object AppDimensions {
     val borderWidth = 2.dp
@@ -11,10 +10,11 @@ object AppDimensions {
     val spacing16 = 16.dp
     val spacing32 = 32.dp
 
-    val paddingSmall = 4.dp
-    val paddingMedium = 8.dp
-    val padding = 16.dp
-    val paddingLarge = 32.dp
+    val padding4 = 4.dp
+    val padding8 = 8.dp
+    val padding16 = 16.dp
+    val padding12 = 12.dp
+    val padding32 = 32.dp
 
     val codeVariableBoxSize = 40.dp
     val commandVariableBoxSize = 32.dp

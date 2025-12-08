@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import ru.lemonapes.easyprog.android.MainViewModel
 import ru.lemonapes.easyprog.android.ui.columns.CodeColumn
 import ru.lemonapes.easyprog.android.ui.columns.CommandsColumn
@@ -30,9 +29,9 @@ fun MainScreen(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = AppDimensions.padding)
-            .padding(horizontal = AppDimensions.padding),
-        horizontalArrangement = Arrangement.spacedBy(AppDimensions.padding)
+            .padding(top = AppDimensions.padding16)
+            .padding(horizontal = AppDimensions.padding16),
+        horizontalArrangement = Arrangement.spacedBy(AppDimensions.padding16)
     ) {
         Button(onClick = {
             viewModel.executeCommands()
@@ -53,8 +52,8 @@ fun MainScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(top = AppDimensions.topPadding)
-            .padding(AppDimensions.padding),
-        horizontalArrangement = Arrangement.spacedBy(AppDimensions.padding)
+            .padding(AppDimensions.padding16),
+        horizontalArrangement = Arrangement.spacedBy(AppDimensions.padding16)
     ) {
         CodeColumn(viewState.codeItems)
         CommandsColumn(viewState, viewModel)

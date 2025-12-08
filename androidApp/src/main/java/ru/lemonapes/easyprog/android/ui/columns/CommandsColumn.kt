@@ -62,7 +62,7 @@ fun RowScope.CommandsColumn(
                 Text(
                     "Колонка для комманд",
                     color = AppColors.BorderDefault,
-                    modifier = Modifier.padding(AppDimensions.paddingLarge)
+                    modifier = Modifier.padding(AppDimensions.padding32)
                 )
             }
         } else {

@@ -158,7 +158,7 @@ class MainViewModel : ViewModel() {
         return _viewState.value.commandItems.all { command ->
             when (command) {
                 is CopyValueCommand -> command.source != null && command.target != null
-                else -> true
+                is MoveValueCommand -> command.source != null && command.target != null
             }
         }
     }
