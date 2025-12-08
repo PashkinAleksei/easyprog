@@ -55,7 +55,7 @@ fun RowScope.CommandsColumn(
                 shape = AppShapes.cornerMedium
             )
             .dragAndDropTextTarget(columnDragAndDropTarget),
-        contentPadding = PaddingValues(bottom = AppDimensions.spacing),
+        contentPadding = PaddingValues(bottom = AppDimensions.spacing8),
     ) {
         if (viewState.commandItems.isEmpty()) {
             item {
@@ -67,7 +67,7 @@ fun RowScope.CommandsColumn(
             }
         } else {
             itemsIndexed(viewState.commandItems, key = { _, item -> item.stateId }) { index, item ->
-                val topPadding = if (index == 0) AppDimensions.spacing else AppDimensions.borderWidth
+                val topPadding = if (index == 0) AppDimensions.spacing8 else AppDimensions.borderWidth
 
                 Box(modifier = Modifier.fillMaxWidth()) {
                     Column(
@@ -82,7 +82,7 @@ fun RowScope.CommandsColumn(
                                 color = AppColors.DividerHover
                             )
                         } else {
-                            Spacer(modifier = Modifier.height(AppDimensions.spacing))
+                            Spacer(modifier = Modifier.height(AppDimensions.spacing8))
                         }
                         when (item) {
                             is CopyValueCommand -> item.CommandRow(
@@ -107,7 +107,7 @@ fun RowScope.CommandsColumn(
                                     color = AppColors.DividerHover
                                 )
                             } else {
-                                Spacer(modifier = Modifier.height(AppDimensions.spacing))
+                                Spacer(modifier = Modifier.height(AppDimensions.spacing8))
                             }
                         }
                     }

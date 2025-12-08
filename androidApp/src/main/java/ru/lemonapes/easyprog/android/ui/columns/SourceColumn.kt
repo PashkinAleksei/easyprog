@@ -34,7 +34,7 @@ fun RowScope.SourceColumn(viewModel: MainViewModel, sourceItems: List<CommandIte
                 color = AppColors.BorderDefault,
                 shape = AppShapes.cornerMedium
             ),
-        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing),
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing8),
         contentPadding = PaddingValues(AppDimensions.padding)
     ) {
         items(sourceItems) { item ->

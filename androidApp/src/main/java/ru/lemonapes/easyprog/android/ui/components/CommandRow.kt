@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,10 +24,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import ru.lemonapes.easyprog.android.CodePeace
 import ru.lemonapes.easyprog.android.MainViewModel
 import ru.lemonapes.easyprog.android.R
@@ -74,14 +79,15 @@ fun TwoVariableCommand.CommandRow(
                 Box(
                     modifier = Modifier
                         .clip(AppShapes.cornerMedium)
-                        .background(AppColors.CommandDarkGreen)
+                        .background(AppColors.CommandAccent)
 
                 ) {
                     Box(Modifier.padding(vertical = AppDimensions.paddingSmall, horizontal = AppDimensions.paddingMedium)) {
                         Image(
                             modifier = Modifier.size(AppDimensions.iconSize),
                             painter = painterResource(R.drawable.copy),
-                            contentDescription = "Copy command"
+                            contentDescription = "Copy command",
+                            colorFilter = ColorFilter.tint(AppColors.CommandBackground),
                         )
                     }
                 }
@@ -90,13 +96,14 @@ fun TwoVariableCommand.CommandRow(
                 Box(
                     modifier = Modifier
                         .clip(AppShapes.cornerMedium)
-                        .background(AppColors.CommandDarkGreen)
+                        .background(AppColors.CommandAccent)
                 ) {
                     Box(Modifier.padding(vertical = AppDimensions.paddingSmall, horizontal = AppDimensions.paddingMedium)) {
                         Image(
                             modifier = Modifier.size(AppDimensions.iconSize),
                             painter = painterResource(R.drawable.cut),
-                            contentDescription = "Cut command"
+                            contentDescription = "Cut command",
+                            colorFilter = ColorFilter.tint(AppColors.CommandBackground),
                         )
                     }
                 }
@@ -106,27 +113,29 @@ fun TwoVariableCommand.CommandRow(
 
         // First dropdown
         Box(Modifier.clickable { expanded1.value = true }) {
-            source?.second?.let { index ->
+            source?.let { index ->
                 val codePeace = codeItems[index]
                 if (codePeace is CodePeace.IntVariable) {
-                    codePeace.VariableBox(Modifier.size(AppDimensions.variableBoxSmall))
+                    codePeace.VariableBox(Modifier.size(AppDimensions.commandVariableBoxSize))
                 } else null
             } ?: Box(
                 modifier = Modifier
-                    .size(AppDimensions.variableBoxSmall)
+                    .size(AppDimensions.commandVariableBoxSize)
                     .background(
-                        color = AppColors.CommandDarkGreen,
+                        color = AppColors.CommandAccent,
                         shape = AppShapes.cornerSmall
                     )
             ) {
                 Text(
-                    text = source?.first ?: "?",
-                    color = AppColors.TextPrimary,
+                    text = "?",
+                    color = AppColors.CommandBackground,
                     textAlign = TextAlign.Center,
+                    fontSize = 24.sp,
+                    fontWeight= FontWeight.SemiBold,
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
-                            color = AppColors.CommandDarkGreen,
+                            color = AppColors.CommandAccent,
                             shape = AppShapes.cornerSmall
                         )
                         .align(Alignment.Center)
@@ -138,17 +147,19 @@ fun TwoVariableCommand.CommandRow(
             ) {
                 variables.forEach { variable ->
                     DropdownMenuItem(
-                        text = { Text(variable.name) },
+                        text = {
+                            variable.VariableBox(Modifier.size(AppDimensions.commandVariableBoxSize))
+                        },
                         onClick = {
                             when (this@CommandRow) {
                                 is MoveValueCommand -> viewModel.updateCommand(
                                     index,
-                                    copy(source = variable.name to codeItems.indexOf(variable))
+                                    copy(source = codeItems.indexOf(variable))
                                 )
 
                                 is CopyValueCommand -> viewModel.updateCommand(
                                     index,
-                                    copy(source = variable.name to codeItems.indexOf(variable))
+                                    copy(source = codeItems.indexOf(variable))
                                 )
                             }
                             expanded1.value = false
@@ -158,38 +169,38 @@ fun TwoVariableCommand.CommandRow(
             }
         }
 
-        Spacer(modifier = Modifier.width(AppDimensions.spacingSmall))
+        Spacer(modifier = Modifier.width(AppDimensions.spacing2))
 
-        Text(
-            text = "\u2192",
-            color = AppColors.TextPrimary,
-            style = TextStyle(
-                fontWeight = FontWeight.W900,
-                fontSize = AppDimensions.arrowFontSize,
-            )
+        Image(
+            modifier = Modifier.padding(top=AppDimensions.spacing2).size(28.dp),
+            painter = painterResource(R.drawable.arrow_right_alt),
+            contentDescription = "to",
+            colorFilter = ColorFilter.tint(AppColors.CommandAccent),
         )
 
-        Spacer(modifier = Modifier.width(AppDimensions.spacingSmall))
+        Spacer(modifier = Modifier.width(AppDimensions.spacing2))
 
         // Second dropdown
         Box(Modifier.clickable { expanded2.value = true }) {
-            target?.second?.let { index ->
+            target?.let { index ->
                 val codePeace = codeItems[index]
                 if (codePeace is CodePeace.IntVariable) {
-                    codePeace.VariableBox(Modifier.size(AppDimensions.variableBoxSmall))
+                    codePeace.VariableBox(Modifier.size(AppDimensions.commandVariableBoxSize))
                 } else null
             } ?: Box(
                 modifier = Modifier
-                    .size(AppDimensions.variableBoxSmall)
+                    .size(AppDimensions.commandVariableBoxSize)
                     .background(
-                        color = AppColors.CommandDarkGreen,
+                        color = AppColors.CommandAccent,
                         shape = AppShapes.cornerSmall
                     )
                     .clickable { expanded2.value = true }) {
                 Text(
-                    text = target?.first ?: "?",
+                    text = "?",
+                    fontSize = 24.sp,
                     textAlign = TextAlign.Center,
-                    color = AppColors.TextPrimary,
+                    color = AppColors.CommandBackground,
+                    fontWeight= FontWeight.Bold,
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.Center)
@@ -201,17 +212,19 @@ fun TwoVariableCommand.CommandRow(
             ) {
                 variables.forEach { variable ->
                     DropdownMenuItem(
-                        text = { Text(variable.name) },
+                        text = {
+                            variable.VariableBox(Modifier.size(AppDimensions.commandVariableBoxSize))
+                        },
                         onClick = {
                             when (this@CommandRow) {
                                 is CopyValueCommand -> viewModel.updateCommand(
                                     index,
-                                    copy(target = variable.name to codeItems.indexOf(variable))
+                                    copy(target = codeItems.indexOf(variable))
                                 )
 
                                 is MoveValueCommand -> viewModel.updateCommand(
                                     index,
-                                    copy(target = variable.name to codeItems.indexOf(variable))
+                                    copy(target = codeItems.indexOf(variable))
                                 )
                             }
                             expanded2.value = false

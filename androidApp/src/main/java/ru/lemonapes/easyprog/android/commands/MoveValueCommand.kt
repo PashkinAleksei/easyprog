@@ -9,8 +9,8 @@ import ru.lemonapes.easyprog.android.CodePeace
 @Immutable
 data class MoveValueCommand(
     override val id: Long = Calendar.getInstance().timeInMillis,
-    override val target: Pair<String, Int>? = null,
-    override val source: Pair<String, Int>? = null,
+    override val target: Int? = null,
+    override val source: Int? = null,
 ) : TwoVariableCommand {
     override val text
         get() = "Переместить"
@@ -21,8 +21,8 @@ data class MoveValueCommand(
     override fun invoke(codeItems: ImmutableList<CodePeace>): ImmutableList<CodePeace> {
         val newCodeItems = codeItems.toMutableList()
 
-        val sourceIndex = source!!.second
-        val targetIndex = target!!.second
+        val sourceIndex = source!!
+        val targetIndex = target!!
 
         val sourceItem = newCodeItems.removeAt(sourceIndex) as CodePeace.IntVariable
         newCodeItems.add(sourceIndex, sourceItem.copy(value = null))

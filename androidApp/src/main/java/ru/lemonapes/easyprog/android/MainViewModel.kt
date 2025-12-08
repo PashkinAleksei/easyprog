@@ -16,13 +16,15 @@ import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 
 class MainViewModel : ViewModel() {
 
+    private val initialCodeItems = persistentListOf(
+        CodePeace.IntVariable(value = 5, colorIndex = 0),
+        CodePeace.IntVariable(value = 10, colorIndex = 1),
+        CodePeace.IntVariable(value = null, colorIndex = 2)
+    )
+
     private val _viewState = MutableStateFlow(
         MainViewState(
-            codeItems = persistentListOf(
-                CodePeace.IntVariable(name = "A", value = 5),
-                CodePeace.IntVariable(name = "B", value = 10),
-                CodePeace.IntVariable(name = "C", value = null)
-            ),
+            codeItems = initialCodeItems,
             sourceItems = persistentListOf(
                 MoveValueCommand(),
                 CopyValueCommand()
@@ -80,13 +82,7 @@ class MainViewModel : ViewModel() {
 
     fun resetCodeItems() {
         _viewState.update {
-            it.copy(
-                codeItems = persistentListOf(
-                    CodePeace.IntVariable(name = "A", value = 5),
-                    CodePeace.IntVariable(name = "B", value = 10),
-                    CodePeace.IntVariable(name = "C", value = null)
-                )
-            )
+            it.copy(codeItems = initialCodeItems)
         }
     }
 

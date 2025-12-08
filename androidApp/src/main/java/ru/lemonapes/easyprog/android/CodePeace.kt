@@ -7,8 +7,8 @@ sealed class CodePeace {
 
     data class IntVariable(
         override val id: Long = Calendar.getInstance().timeInMillis,
-        val name: String,
         var value: Int?,
         val isMutable: Boolean = true,
+        val colorIndex: Int,
     ) : CodePeace()
 }

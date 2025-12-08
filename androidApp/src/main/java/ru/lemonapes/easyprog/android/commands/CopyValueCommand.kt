@@ -9,8 +9,8 @@ import ru.lemonapes.easyprog.android.CodePeace
 @Immutable
 data class CopyValueCommand(
     override val id: Long = Calendar.getInstance().timeInMillis,
-    override val target: Pair<String, Int>? = null,
-    override val source: Pair<String, Int>? = null,
+    override val target: Int? = null,
+    override val source: Int? = null,
 ) : TwoVariableCommand {
     override val text
         get() = "Копировать"
@@ -22,8 +22,8 @@ data class CopyValueCommand(
     override fun invoke(codeItems: ImmutableList<CodePeace>): ImmutableList<CodePeace> {
         val newCodeItems = codeItems.toMutableList()
 
-        val sourceIndex = source!!.second
-        val targetIndex = target!!.second
+        val sourceIndex = source!!
+        val targetIndex = target!!
 
         val sourceItem = codeItems[sourceIndex] as CodePeace.IntVariable
         val targetItem = newCodeItems.removeAt(targetIndex) as CodePeace.IntVariable

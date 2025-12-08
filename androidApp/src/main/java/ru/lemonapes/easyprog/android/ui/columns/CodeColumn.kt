@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -18,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import ru.lemonapes.easyprog.android.CodePeace
 import ru.lemonapes.easyprog.android.ui.components.VariableBox
 import ru.lemonapes.easyprog.android.ui.theme.AppColors
@@ -36,7 +36,7 @@ fun RowScope.CodeColumn(codeItems: List<CodePeace>) {
                 shape = AppShapes.cornerMedium
             ),
         contentPadding = PaddingValues(AppDimensions.padding),
-        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing)
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing8)
     ) {
 
         itemsIndexed(codeItems) { index, item ->
@@ -55,12 +55,12 @@ fun RowScope.CodeColumn(codeItems: List<CodePeace>) {
                                 Text(
                                     modifier = Modifier.align(Alignment.Center),
                                     text = value.toString(),
-                                    color = AppColors.TextSecondary
+                                    color = AppColors.TextSecondary,
+                                    fontWeight= FontWeight.Bold,
                                 )
                             }
                         }
-                        item.VariableBox(Modifier.size(AppDimensions.variableBoxSize))
-                        Spacer(modifier = Modifier.height(AppDimensions.spacing))
+                        item.VariableBox(Modifier.size(AppDimensions.codeVariableBoxSize))
                     }
                 }
             }
