@@ -20,7 +20,7 @@ import ru.lemonapes.easyprog.android.ui.dialogs.VictoryDialog
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions
 
 @Composable
-fun MainScreen(
+fun MainView(
     modifier: Modifier = Modifier,
     viewModel: MainViewModel,
 ) {

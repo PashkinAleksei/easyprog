@@ -20,16 +20,16 @@ object AppColors {
 
     // Box color palette (10 colors)
     val BoxColors = listOf(
+        Color(0xFFC62828),
+        Color(0xFF2E7D32),
+        Color(0xFF1565C0),
+        Color(0xFF283593),
+        Color(0xFF6A1B9A),
+        Color(0xFFAD1457),
+        Color(0xFFF9A825),
+        Color(0xFF009688),
+        Color(0xFF9E9D24),
+        Color(0xFF00695C),
         Color.Transparent,
-        Color(0x80FF0000), // Red
-        Color(0x8000FF09), // Green
-        Color(0x8000E4FF), // Cyan
-        Color(0x800037FF), // Blue
-        Color(0x805C00FF), // Purple
-        Color(0x80FF0056), // Pink
-        Color(0x808B2D00), // Brown
-        Color(0x8090A4AE),  // Blue Grey
-        Color(0xFFFFF200), // Yellow
-        Color(0x80FF9500), // Orange
     )
 }

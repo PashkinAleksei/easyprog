@@ -15,7 +15,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import ru.lemonapes.easyprog.android.drag_and_drop_target.createGlobalDragAndDropTarget
 import ru.lemonapes.easyprog.android.extensions.dragAndDropTextTarget
-import ru.lemonapes.easyprog.android.ui.screens.MainScreen
+import ru.lemonapes.easyprog.android.ui.screens.MainView
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
                         .fillMaxSize()
                         .dragAndDropTextTarget(globalDragAndDropTarget),
                 ) { paddings ->
-                    MainScreen(
+                    MainView(
                         modifier = Modifier.padding(paddings),
                         viewModel = viewModel,
                     )
