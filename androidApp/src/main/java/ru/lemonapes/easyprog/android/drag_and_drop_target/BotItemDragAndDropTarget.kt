@@ -2,6 +2,7 @@ package ru.lemonapes.easyprog.android.drag_and_drop_target
 
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.StateFlow
 import ru.lemonapes.easyprog.Utils.Companion.log
 import ru.lemonapes.easyprog.android.MainViewModel
@@ -12,7 +13,7 @@ import kotlin.math.max
 fun createBotItemDragAndDropTarget(
     index: Int,
     viewModel: MainViewModel,
-    commandItems: List<CommandItem>,
+    commandItems: ImmutableList<CommandItem>,
     draggedCommandItem: StateFlow<CommandItem?>,
 ): DragAndDropTarget {
     return object : DragAndDropTarget {

@@ -7,7 +7,8 @@ import ru.lemonapes.easyprog.android.CodePeace
 @Immutable
 sealed interface CommandItem {
     val id: Long
-    val text: String
+    val textRes: Int
+    val iconRes: Int
 
     val stateId: String
     fun mkCopy(): CommandItem

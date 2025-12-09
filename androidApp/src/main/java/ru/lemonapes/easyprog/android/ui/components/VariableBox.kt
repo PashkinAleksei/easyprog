@@ -8,6 +8,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import ru.lemonapes.easyprog.android.CodePeace
 import ru.lemonapes.easyprog.android.R
 import ru.lemonapes.easyprog.android.ui.theme.AppColors
@@ -23,7 +24,7 @@ fun CodePeace.IntVariable.VariableBox(
         Image(
             modifier = modifier.clip(AppShapes.cornerSmall),
             painter = painterResource(R.drawable.vector_box),
-            contentDescription = "Box",
+            contentDescription = stringResource(R.string.variable_box_description),
             colorFilter = ColorFilter.tint(color, blendMode = BlendMode.Color),
         )
     }

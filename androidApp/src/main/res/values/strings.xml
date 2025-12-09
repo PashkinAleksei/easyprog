@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="start_button_description">Старт</string>
+    <string name="command_copy_text">Копировать</string>
+    <string name="command_move_text">Переместить</string>
+    <string name="arrow_to_description">to</string>
+    <string name="unknown_variable">?</string>
+    <string name="variable_box_description">Box</string>
+    <string name="victory_title">Поздравляем!</string>
+    <string name="victory_message">Вы победили!</string>
+    <string name="try_again_title">Попробуйте еще</string>
+    <string name="try_again_message">Условие победы не выполнено</string>
+    <string name="ok">OK</string>
+</resources>

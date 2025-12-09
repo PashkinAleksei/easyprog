@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import kotlinx.collections.immutable.ImmutableList
 import ru.lemonapes.easyprog.android.CodePeace
 import ru.lemonapes.easyprog.android.ui.components.VariableBox
 import ru.lemonapes.easyprog.android.ui.theme.AppColors
@@ -26,7 +27,7 @@ import ru.lemonapes.easyprog.android.ui.theme.AppDimensions
 import ru.lemonapes.easyprog.android.ui.theme.AppShapes
 
 @Composable
-fun RowScope.CodeColumn(codeItems: List<CodePeace>) {
+fun RowScope.CodeColumn(codeItems: ImmutableList<CodePeace>) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(5),
         modifier = Modifier

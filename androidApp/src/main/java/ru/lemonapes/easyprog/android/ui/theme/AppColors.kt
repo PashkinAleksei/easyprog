@@ -12,6 +12,7 @@ object AppColors {
     val VariableLabelText = Color(0xFFFF9900)
     val BorderDefault = Color.Gray
     val BorderHover = Color(0xFF4CAF50)
+    val PlayButtonColor = Color(0xFF4CAF50)
     val DividerHover = Color.Red
     val TextPrimary = Color.White
     val TextSecondary = Color.Black

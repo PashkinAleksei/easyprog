@@ -22,6 +22,7 @@ object AppDimensions {
     val variableValueHeight = 20.dp
     val variableValueWidth = 25.dp
     val iconSize = 24.dp
+    val mainIconSize = 60.dp
 
     val topPadding = 50.dp
     val dividerThickness = 2.dp
