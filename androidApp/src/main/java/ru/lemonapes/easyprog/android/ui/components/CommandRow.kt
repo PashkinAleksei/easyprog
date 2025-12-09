@@ -50,7 +50,7 @@ fun TwoVariableCommand.CommandRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = AppDimensions.padding16)
+            .padding(horizontal = AppDimensions.dp16)
             .background(
                 color = backgroundColor,
                 shape = AppShapes.cornerMedium
@@ -61,7 +61,7 @@ fun TwoVariableCommand.CommandRow(
                     ClipData.newPlainText("dragged_item", text)
                 )
             }
-            .padding(AppDimensions.padding12),
+            .padding(AppDimensions.dp12),
     ) {
         Spacer(modifier = Modifier.weight(0.7f))
         when (this@CommandRow) {
@@ -72,7 +72,7 @@ fun TwoVariableCommand.CommandRow(
                         .background(AppColors.CommandAccent)
 
                 ) {
-                    Box(Modifier.padding(vertical = AppDimensions.padding4, horizontal = AppDimensions.padding8)) {
+                    Box(Modifier.padding(vertical = AppDimensions.dp4, horizontal = AppDimensions.dp8)) {
                         Image(
                             modifier = Modifier.size(AppDimensions.iconSize),
                             painter = painterResource(iconRes),
@@ -104,18 +104,18 @@ fun TwoVariableCommand.CommandRow(
             }
         )
 
-        Spacer(modifier = Modifier.width(AppDimensions.spacing2))
+        Spacer(modifier = Modifier.width(AppDimensions.dp2))
 
         Image(
             modifier = Modifier
-                .padding(top = AppDimensions.spacing2)
+                .padding(top = AppDimensions.dp2)
                 .size(28.dp),
             painter = painterResource(R.drawable.arrow_right_alt),
             contentDescription = stringResource(R.string.arrow_to_description),
             colorFilter = ColorFilter.tint(AppColors.CommandAccent),
         )
 
-        Spacer(modifier = Modifier.width(AppDimensions.spacing2))
+        Spacer(modifier = Modifier.width(AppDimensions.dp2))
 
         IntVariableDropdownBox(
             selectedIndex = target,

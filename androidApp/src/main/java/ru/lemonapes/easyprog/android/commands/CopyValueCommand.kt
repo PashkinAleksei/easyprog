@@ -20,7 +20,7 @@ data class CopyValueCommand(
         get() = R.string.command_copy_text
     override val iconRes: Int
         @DrawableRes
-        get() = R.drawable.copy
+        get() = R.drawable.ic_copy
     override val stateId: String
         get() = toString()
 

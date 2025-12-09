@@ -3,18 +3,14 @@ package ru.lemonapes.easyprog.android.ui.theme
 import androidx.compose.ui.unit.dp
 
 object AppDimensions {
-    val borderWidth = 2.dp
-    val spacing8 = 8.dp
-    val spacing2 = 2.dp
-    val spacing4 = 4.dp
-    val spacing16 = 16.dp
-    val spacing32 = 32.dp
-
-    val padding4 = 4.dp
-    val padding8 = 8.dp
-    val padding16 = 16.dp
-    val padding12 = 12.dp
-    val padding32 = 32.dp
+    val columnBorderWidth = 2.dp
+    val columnBorderWidthSelected = 4.dp
+    val dp2 = 2.dp
+    val dp4 = 4.dp
+    val dp8 = 8.dp
+    val dp16 = 16.dp
+    val dp12 = 12.dp
+    val dp32 = 32.dp
 
     val sourceCodeIconSize = 32.dp
     val codeVariableBoxSize = 40.dp
@@ -22,7 +18,9 @@ object AppDimensions {
     val variableValueHeight = 20.dp
     val variableValueWidth = 25.dp
     val iconSize = 24.dp
-    val mainIconSize = 60.dp
+    val mainIconButtonSize = 60.dp
+    val playIconSize = 60.dp
+    val menuIconSize = 50.dp
 
     val topPadding = 50.dp
     val dividerThickness = 2.dp

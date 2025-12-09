@@ -20,7 +20,7 @@ data class MoveValueCommand(
         get() = R.string.command_move_text
     override val iconRes: Int
         @DrawableRes
-        get() = R.drawable.cut
+        get() = R.drawable.ic_cut
     override val stateId: String
         get() = toString()
 

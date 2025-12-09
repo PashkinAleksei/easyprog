@@ -26,10 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import kotlinx.collections.immutable.ImmutableList
 import ru.lemonapes.easyprog.android.MainViewModel
-import ru.lemonapes.easyprog.android.R
 import ru.lemonapes.easyprog.android.commands.CommandItem
-import ru.lemonapes.easyprog.android.commands.CopyValueCommand
-import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 import ru.lemonapes.easyprog.android.ui.theme.AppColors
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions
 import ru.lemonapes.easyprog.android.ui.theme.AppShapes
@@ -43,13 +40,13 @@ fun RowScope.SourceColumn(viewModel: MainViewModel, sourceItems: ImmutableList<C
             .fillMaxHeight()
             .weight(0.8f)
             .border(
-                width = AppDimensions.borderWidth,
-                color = AppColors.BorderDefault,
+                width = AppDimensions.columnBorderWidth,
+                color = AppColors.ColumnsBorderColor,
                 shape = AppShapes.cornerMedium
             ),
-        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing8),
-        horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing8),
-        contentPadding = PaddingValues(AppDimensions.padding16),
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.dp8),
+        horizontalArrangement = Arrangement.spacedBy(AppDimensions.dp8),
+        contentPadding = PaddingValues(AppDimensions.dp16),
         userScrollEnabled = false,
     ) {
         items(sourceItems) { item ->
@@ -72,7 +69,7 @@ fun RowScope.SourceColumn(viewModel: MainViewModel, sourceItems: ImmutableList<C
                         color = AppColors.CommandBackground,
                         shape = AppShapes.cornerMedium
                     )
-                    .padding(AppDimensions.padding8),
+                    .padding(AppDimensions.dp8),
                 contentAlignment = Alignment.Center
             ) {
                 Image(

@@ -6,11 +6,12 @@ object AppColors {
     val SourceItemBackground = Color(0xFF2196F3)
     val CommandBackground = Color(0xFF673AB7)
     val CommandAccent = Color(0xFFD9C9FF)
+    val ColumnsBorderColor = Color(0xFFD9C9FF)
+    val ColumnsBorderColorSelected = Color(0xFF673AB7)
     val CommandBackgroundExecuting = Color(0xFFA7008E)
     val CommandHoverBackground = Color(0xFFE8F5E9)
     val VariableLabelBackground = Color(0x66000000)
     val VariableLabelText = Color(0xFFFF9900)
-    val BorderDefault = Color.Gray
     val BorderHover = Color(0xFF4CAF50)
     val PlayButtonColor = Color(0xFF4CAF50)
     val DividerHover = Color.Red

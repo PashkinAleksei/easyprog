@@ -34,13 +34,13 @@ fun RowScope.CodeColumn(codeItems: ImmutableList<CodePeace>) {
             .fillMaxHeight()
             .weight(1.2f)
             .border(
-                width = AppDimensions.borderWidth,
-                color = AppColors.BorderDefault,
+                width = AppDimensions.columnBorderWidth,
+                color = AppColors.ColumnsBorderColor,
                 shape = AppShapes.cornerMedium
             ),
-        contentPadding = PaddingValues(AppDimensions.padding16),
-        verticalArrangement = Arrangement.spacedBy(AppDimensions.spacing8),
-        horizontalArrangement = Arrangement.spacedBy(AppDimensions.spacing8)
+        contentPadding = PaddingValues(AppDimensions.dp16),
+        verticalArrangement = Arrangement.spacedBy(AppDimensions.dp8),
+        horizontalArrangement = Arrangement.spacedBy(AppDimensions.dp8)
     ) {
 
         itemsIndexed(codeItems) { index, item ->
