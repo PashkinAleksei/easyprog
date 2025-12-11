@@ -95,11 +95,18 @@ fun GameView(
 
 
     if (viewState.showVictoryDialog) {
-        VictoryDialog(onDismiss = viewModel::onVictoryDialogDismiss)
+        VictoryDialog(
+            onReplay = viewModel::onVictoryReplay,
+            onMenu = { viewModel.onVictoryMenu(onBackToMenu) },
+            onNextLevel = { viewModel.onVictoryNextLevel(onBackToMenu) }
+        )
     }
 
     if (viewState.showTryAgainDialog) {
-        TryAgainDialog(onDismiss = viewModel::onTryAgainDialogDismiss)
+        TryAgainDialog(
+            onReplay = viewModel::onTryAgainReplay,
+            onMenu = { viewModel.onTryAgainMenu(onBackToMenu) }
+        )
     }
 }
 

@@ -163,13 +163,31 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun onVictoryDialogDismiss() {
+    fun onVictoryReplay() {
         hideVictoryDialog()
         resetCodeItems()
     }
 
-    fun onTryAgainDialogDismiss() {
+    fun onVictoryMenu(navigateToMenu: () -> Unit) {
+        hideVictoryDialog()
+        resetCodeItems()
+        navigateToMenu()
+    }
+
+    fun onVictoryNextLevel(navigateToNextLevel: () -> Unit) {
+        hideVictoryDialog()
+        resetCodeItems()
+        navigateToNextLevel()
+    }
+
+    fun onTryAgainReplay() {
         hideTryAgainDialog()
         resetCodeItems()
+    }
+
+    fun onTryAgainMenu(navigateToMenu: () -> Unit) {
+        hideTryAgainDialog()
+        resetCodeItems()
+        navigateToMenu()
     }
 }

@@ -21,6 +21,7 @@ object AppDimensions {
     val mainIconButtonSize = 60.dp
     val playIconSize = 60.dp
     val menuIconSize = 50.dp
+    val dialogIconButtonSize = 48.dp
 
     val topPadding = 50.dp
     val dividerThickness = 2.dp
