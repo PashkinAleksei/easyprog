@@ -1,6 +1,7 @@
 package ru.lemonapes.easyprog.android.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,14 +13,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.lemonapes.easyprog.android.GameViewModel
 import ru.lemonapes.easyprog.android.MyApplicationTheme
@@ -29,6 +35,7 @@ import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 import ru.lemonapes.easyprog.android.ui.columns.CodeColumn
 import ru.lemonapes.easyprog.android.ui.columns.CommandsColumn
 import ru.lemonapes.easyprog.android.ui.columns.SourceColumn
+import ru.lemonapes.easyprog.android.ui.dialogs.LevelInfoDialog
 import ru.lemonapes.easyprog.android.ui.dialogs.TryAgainDialog
 import ru.lemonapes.easyprog.android.ui.dialogs.VictoryDialog
 import ru.lemonapes.easyprog.android.ui.theme.AppColors
@@ -52,7 +59,7 @@ fun GameView(
                 .fillMaxWidth()
                 .padding(vertical = AppDimensions.dp2)
                 .height(AppDimensions.playIconSize),
-            horizontalArrangement = Arrangement.spacedBy(AppDimensions.dp16)
+            verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
                 onClick = onBackToMenu,
@@ -67,7 +74,39 @@ fun GameView(
                     tint = AppColors.COLOR_ACCENT
                 )
             }
-            Spacer(Modifier.weight(1f))
+
+            Spacer(
+                modifier = Modifier
+                    .padding(end = AppDimensions.dp16)
+                    .size(AppDimensions.mainIconButtonSize)
+            )
+
+            val levelPrefix = stringResource(R.string.level_prefix)
+            val levelTitle = "$levelPrefix${viewState.levelId} ${viewState.levelTitle}"
+
+            Text(
+                modifier = Modifier.weight(1f),
+                text = levelTitle,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = AppColors.COLOR_ACCENT,
+                textAlign = TextAlign.Center,
+            )
+
+            IconButton(
+                onClick = { viewModel.showLevelInfoDialog() },
+                modifier = Modifier
+                    .padding(start = AppDimensions.dp16)
+                    .size(AppDimensions.mainIconButtonSize)
+            ) {
+                Icon(
+                    modifier = Modifier.size(AppDimensions.questionIconSize),
+                    painter = painterResource(R.drawable.ic_question_2),
+                    contentDescription = stringResource(R.string.level_info),
+                    tint = AppColors.COLOR_ACCENT
+                )
+            }
+
             IconButton(
                 onClick = { viewModel.executeCommands() },
                 modifier = Modifier
@@ -94,6 +133,13 @@ fun GameView(
         }
     }
 
+    if (viewState.showLevelInfoDialog) {
+        LevelInfoDialog(
+            title = viewState.levelTitle,
+            description = viewState.levelDescription,
+            onDismiss = { viewModel.hideLevelInfoDialog() }
+        )
+    }
 
     if (viewState.showVictoryDialog) {
         VictoryDialog(
@@ -138,6 +184,7 @@ private fun GameViewEmptyPreview() {
     MyApplicationTheme {
         Surface {
             val viewModel = viewModel<GameViewModel>()
+            viewModel.loadLevel(1)
 
             GameView(
                 viewModel = viewModel,

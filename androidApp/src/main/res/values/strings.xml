@@ -13,7 +13,9 @@
     <string name="try_again_message">Условие победы не выполнено</string>
     <string name="empty_command_icon">Колонка комманд</string>
     <string name="ok">OK</string>
+    <string name="level_info">Информация об уровне</string>
     <string name="replay">Повторить</string>
     <string name="menu">Меню</string>
     <string name="next_level">Следующий уровень</string>
+    <string name="level_prefix">Ур.</string>
 </resources>

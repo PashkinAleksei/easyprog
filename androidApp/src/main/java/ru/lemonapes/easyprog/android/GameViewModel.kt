@@ -19,7 +19,6 @@ import ru.lemonapes.easyprog.android.levels.LevelRepository
 
 class GameViewModel : ViewModel() {
 
-    private var currentLevelId: Int = 1
     private var currentLevelConfig: LevelConfig? = null
     private var initialCodeItems: ImmutableList<CodePeace> = persistentListOf()
 
@@ -27,15 +26,18 @@ class GameViewModel : ViewModel() {
     val viewState: StateFlow<MainViewState> = _viewState.asStateFlow()
 
     fun loadLevel(levelId: Int) {
-        currentLevelId = levelId
         currentLevelConfig = LevelRepository.getLevel(levelId)
 
         currentLevelConfig?.let { config ->
             initialCodeItems = config.codeItems
             _viewState.update {
                 MainViewState(
+                    levelId = levelId,
                     codeItems = config.codeItems,
                     sourceItems = config.availableCommands,
+                    levelTitle = config.title,
+                    levelDescription = config.description,
+                    showLevelInfoDialog = true,
                 )
             }
         }
@@ -102,6 +104,14 @@ class GameViewModel : ViewModel() {
 
     fun hideTryAgainDialog() {
         _viewState.update { it.copy(showTryAgainDialog = false) }
+    }
+
+    fun showLevelInfoDialog() {
+        _viewState.update { it.copy(showLevelInfoDialog = true) }
+    }
+
+    fun hideLevelInfoDialog() {
+        _viewState.update { it.copy(showLevelInfoDialog = false) }
     }
 
     fun setHovered(isHovered: Boolean) {
@@ -187,7 +197,7 @@ class GameViewModel : ViewModel() {
         navigateToMenu()
     }
 
-    fun getCurrentLevelId(): Int = currentLevelId
+    fun getCurrentLevelId(): Int = _viewState.value.levelId
 
-    fun hasNextLevel(): Boolean = LevelRepository.hasNextLevel(currentLevelId)
+    fun hasNextLevel(): Boolean = LevelRepository.hasNextLevel(_viewState.value.levelId)
 }

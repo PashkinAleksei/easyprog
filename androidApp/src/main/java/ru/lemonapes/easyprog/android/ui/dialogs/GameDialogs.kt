@@ -82,16 +82,38 @@ fun TryAgainDialog(
 }
 
 @Composable
+fun LevelInfoDialog(
+    title: String,
+    description: String,
+    onDismiss: () -> Unit,
+) {
+    GameDialog(
+        title = title,
+        message = description,
+        dismissable = true,
+        onDismissRequest = onDismiss,
+    ) {
+        DialogActionButton(
+            iconRes = R.drawable.ic_check,
+            contentDescription = stringResource(R.string.ok),
+            onClick = onDismiss
+        )
+    }
+}
+
+@Composable
 private fun GameDialog(
     title: String,
     message: String,
+    dismissable: Boolean = false,
+    onDismissRequest: () -> Unit = {},
     buttons: @Composable () -> Unit,
 ) {
     Dialog(
-        onDismissRequest = {},
+        onDismissRequest = onDismissRequest,
         properties = DialogProperties(
-            dismissOnBackPress = false,
-            dismissOnClickOutside = false
+            dismissOnBackPress = dismissable,
+            dismissOnClickOutside = dismissable
         )
     ) {
         Box(
