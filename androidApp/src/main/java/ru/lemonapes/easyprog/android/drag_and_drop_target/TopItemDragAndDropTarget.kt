@@ -2,12 +2,10 @@ package ru.lemonapes.easyprog.android.drag_and_drop_target
 
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
-import kotlinx.coroutines.flow.StateFlow
-import ru.lemonapes.easyprog.android.MainViewModel
-import ru.lemonapes.easyprog.android.commands.CommandItem
+import ru.lemonapes.easyprog.android.GameViewModel
 import ru.lemonapes.easyprog.android.toItem
 
-fun MainViewModel.createTopItemDragAndDropTarget(
+fun GameViewModel.createTopItemDragAndDropTarget(
     index: Int,
 ): DragAndDropTarget {
     return object : DragAndDropTarget {

@@ -4,9 +4,9 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import ru.lemonapes.easyprog.Utils.Companion.log
-import ru.lemonapes.easyprog.android.MainViewModel
+import ru.lemonapes.easyprog.android.GameViewModel
 
-fun MainViewModel.createGlobalDragAndDropTarget(): DragAndDropTarget {
+fun GameViewModel.createGlobalDragAndDropTarget(): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
             val label = event.toAndroidDragEvent()

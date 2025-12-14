@@ -14,7 +14,7 @@ import ru.lemonapes.easyprog.android.commands.CommandItem
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 
-class MainViewModel : ViewModel() {
+class GameViewModel : ViewModel() {
 
     private val initialCodeItems = persistentListOf(
         CodePeace.IntVariable(value = 5, colorIndex = 0),

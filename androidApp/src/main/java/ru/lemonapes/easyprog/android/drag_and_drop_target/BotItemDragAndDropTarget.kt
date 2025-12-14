@@ -4,13 +4,12 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.StateFlow
-import ru.lemonapes.easyprog.Utils.Companion.log
-import ru.lemonapes.easyprog.android.MainViewModel
+import ru.lemonapes.easyprog.android.GameViewModel
 import ru.lemonapes.easyprog.android.commands.CommandItem
 import ru.lemonapes.easyprog.android.toItem
 import kotlin.math.max
 
-fun MainViewModel.createBotItemDragAndDropTarget(
+fun GameViewModel.createBotItemDragAndDropTarget(
     index: Int,
     commandItems: ImmutableList<CommandItem>,
     draggedCommandItem: StateFlow<CommandItem?>,

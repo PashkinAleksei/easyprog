@@ -8,7 +8,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import ru.lemonapes.easyprog.android.MainViewModel
+import ru.lemonapes.easyprog.android.GameViewModel
 import ru.lemonapes.easyprog.android.drag_and_drop_target.createGlobalDragAndDropTarget
 import ru.lemonapes.easyprog.android.extensions.dragAndDropTextTarget
 import ru.lemonapes.easyprog.android.ui.screens.GameView
@@ -16,7 +16,7 @@ import ru.lemonapes.easyprog.android.ui.screens.GameView
 fun NavGraphBuilder.gameNavigation(navController: NavHostController) {
     composable<Screens.Game> { backStackEntry ->
         val game: Screens.Game = backStackEntry.toRoute()
-        val viewModel: MainViewModel = viewModel()
+        val viewModel: GameViewModel = viewModel()
 
         val globalDragAndDropTarget = remember {
             viewModel.createGlobalDragAndDropTarget()

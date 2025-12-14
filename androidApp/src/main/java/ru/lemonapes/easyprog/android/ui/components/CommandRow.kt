@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import ru.lemonapes.easyprog.android.CodePeace
-import ru.lemonapes.easyprog.android.MainViewModel
+import ru.lemonapes.easyprog.android.GameViewModel
 import ru.lemonapes.easyprog.android.R
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
@@ -39,7 +39,7 @@ fun TwoVariableCommand.CommandRow(
     index: Int,
     codeItems: ImmutableList<CodePeace>,
     isExecuting: Boolean,
-    viewModel: MainViewModel,
+    viewModel: GameViewModel,
 ) {
     val variables = remember(codeItems) {
         codeItems.filterIsInstance<CodePeace.IntVariable>().map { it }.toImmutableList()

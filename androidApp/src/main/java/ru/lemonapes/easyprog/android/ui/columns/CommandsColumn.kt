@@ -29,7 +29,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
-import ru.lemonapes.easyprog.android.MainViewModel
+import ru.lemonapes.easyprog.android.GameViewModel
 import ru.lemonapes.easyprog.android.MainViewState
 import ru.lemonapes.easyprog.android.MyApplicationTheme
 import ru.lemonapes.easyprog.android.R
@@ -47,7 +47,7 @@ import ru.lemonapes.easyprog.android.ui.theme.AppShapes
 @Composable
 fun RowScope.CommandsColumn(
     viewState: MainViewState,
-    viewModel: MainViewModel,
+    viewModel: GameViewModel,
 ) {
     val isColumnVisualHovered = viewState.isHovered
 
@@ -176,7 +176,7 @@ fun RowScope.CommandsColumn(
 private fun CommandsColumnPreview() {
     MyApplicationTheme {
         Surface {
-            val viewModel = viewModel<MainViewModel>()
+            val viewModel = viewModel<GameViewModel>()
 
             LaunchedEffect(Unit) {
                 viewModel.addCommand(CopyValueCommand(1, 0, 1))
@@ -199,7 +199,7 @@ private fun CommandsColumnPreview() {
 private fun CommandsColumnEmptyPreview() {
     MyApplicationTheme {
         Surface {
-            val viewModel = viewModel<MainViewModel>()
+            val viewModel = viewModel<GameViewModel>()
             val viewState by viewModel.viewState.collectAsState()
             Row {
                 CommandsColumn(

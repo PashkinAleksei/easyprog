@@ -21,7 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
-import ru.lemonapes.easyprog.android.MainViewModel
+import ru.lemonapes.easyprog.android.GameViewModel
 import ru.lemonapes.easyprog.android.MyApplicationTheme
 import ru.lemonapes.easyprog.android.R
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
@@ -37,7 +37,7 @@ import ru.lemonapes.easyprog.android.ui.theme.AppDimensions
 @Composable
 fun GameView(
     modifier: Modifier = Modifier,
-    viewModel: MainViewModel,
+    viewModel: GameViewModel,
     onBackToMenu: () -> Unit = {},
 ) {
     val viewState by viewModel.viewState.collectAsState()
@@ -115,7 +115,7 @@ fun GameView(
 private fun GameViewPreview() {
     MyApplicationTheme {
         Surface {
-            val viewModel = viewModel<MainViewModel>()
+            val viewModel = viewModel<GameViewModel>()
 
             LaunchedEffect(Unit) {
                 viewModel.addCommand(CopyValueCommand())
@@ -135,7 +135,7 @@ private fun GameViewPreview() {
 private fun GameViewEmptyPreview() {
     MyApplicationTheme {
         Surface {
-            val viewModel = viewModel<MainViewModel>()
+            val viewModel = viewModel<GameViewModel>()
 
             GameView(
                 viewModel = viewModel,

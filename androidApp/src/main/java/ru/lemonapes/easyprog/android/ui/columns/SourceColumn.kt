@@ -25,7 +25,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import kotlinx.collections.immutable.ImmutableList
-import ru.lemonapes.easyprog.android.MainViewModel
+import ru.lemonapes.easyprog.android.GameViewModel
 import ru.lemonapes.easyprog.android.commands.CommandItem
 import ru.lemonapes.easyprog.android.ui.theme.AppColors
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions
@@ -33,7 +33,7 @@ import ru.lemonapes.easyprog.android.ui.theme.AppShapes
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun RowScope.SourceColumn(viewModel: MainViewModel, sourceItems: ImmutableList<CommandItem>) {
+fun RowScope.SourceColumn(viewModel: GameViewModel, sourceItems: ImmutableList<CommandItem>) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = Modifier
