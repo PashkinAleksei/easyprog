@@ -1,6 +1,7 @@
 package ru.lemonapes.easyprog.android.navigation
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -18,6 +19,10 @@ fun NavGraphBuilder.gameNavigation(navController: NavHostController) {
         val game: Screens.Game = backStackEntry.toRoute()
         val viewModel: GameViewModel = viewModel()
 
+        LaunchedEffect(game.levelId) {
+            viewModel.loadLevel(game.levelId)
+        }
+
         val globalDragAndDropTarget = remember {
             viewModel.createGlobalDragAndDropTarget()
         }
@@ -30,6 +35,14 @@ fun NavGraphBuilder.gameNavigation(navController: NavHostController) {
             onBackToMenu = {
                 navController.navigate(Screens.LevelMenu) {
                     popUpTo(Screens.LevelMenu) { inclusive = true }
+                }
+            },
+            onNextLevel = {
+                if (viewModel.hasNextLevel()) {
+                    val nextLevelId = viewModel.getCurrentLevelId() + 1
+                    navController.navigate(Screens.Game(nextLevelId)) {
+                        popUpTo(Screens.Game(game.levelId)) { inclusive = true }
+                    }
                 }
             }
         )

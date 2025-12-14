@@ -6,10 +6,11 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import ru.lemonapes.easyprog.android.levels.LevelRepository
 
 data class LevelMenuState(
-    val levels: ImmutableList<Int> = (1..24).toImmutableList() ,
-    val unlockedLevels: Int = 1
+    val levels: ImmutableList<Int> = (1..LevelRepository.getLevelCount()).toImmutableList(),
+    val unlockedLevels: Int = 10,
 )
 
 class LevelMenuViewModel : ViewModel() {

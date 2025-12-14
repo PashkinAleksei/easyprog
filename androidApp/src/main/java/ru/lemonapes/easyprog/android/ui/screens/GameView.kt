@@ -39,6 +39,7 @@ fun GameView(
     modifier: Modifier = Modifier,
     viewModel: GameViewModel,
     onBackToMenu: () -> Unit = {},
+    onNextLevel: () -> Unit = {},
 ) {
     val viewState by viewModel.viewState.collectAsState()
     Column(
@@ -96,9 +97,10 @@ fun GameView(
 
     if (viewState.showVictoryDialog) {
         VictoryDialog(
+            hasNextLevel = viewModel.hasNextLevel(),
             onReplay = viewModel::onVictoryReplay,
             onMenu = { viewModel.onVictoryMenu(onBackToMenu) },
-            onNextLevel = { viewModel.onVictoryNextLevel(onBackToMenu) }
+            onNextLevel = { viewModel.onVictoryNextLevel(onNextLevel) }
         )
     }
 

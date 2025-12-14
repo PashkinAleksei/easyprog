@@ -2,6 +2,7 @@ package ru.lemonapes.easyprog.android
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.delay
@@ -13,25 +14,32 @@ import kotlinx.coroutines.launch
 import ru.lemonapes.easyprog.android.commands.CommandItem
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
+import ru.lemonapes.easyprog.android.levels.LevelConfig
+import ru.lemonapes.easyprog.android.levels.LevelRepository
 
 class GameViewModel : ViewModel() {
 
-    private val initialCodeItems = persistentListOf(
-        CodePeace.IntVariable(value = 5, colorIndex = 0),
-        CodePeace.IntVariable(value = 10, colorIndex = 1),
-        CodePeace.IntVariable(value = null, colorIndex = 2)
-    )
+    private var currentLevelId: Int = 1
+    private var currentLevelConfig: LevelConfig? = null
+    private var initialCodeItems: ImmutableList<CodePeace> = persistentListOf()
 
-    private val _viewState = MutableStateFlow(
-        MainViewState(
-            codeItems = initialCodeItems,
-            sourceItems = persistentListOf(
-                MoveValueCommand(),
-                CopyValueCommand()
-            ),
-        )
-    )
+    private val _viewState = MutableStateFlow(MainViewState())
     val viewState: StateFlow<MainViewState> = _viewState.asStateFlow()
+
+    fun loadLevel(levelId: Int) {
+        currentLevelId = levelId
+        currentLevelConfig = LevelRepository.getLevel(levelId)
+
+        currentLevelConfig?.let { config ->
+            initialCodeItems = config.codeItems
+            _viewState.update {
+                MainViewState(
+                    codeItems = config.codeItems,
+                    sourceItems = config.availableCommands,
+                )
+            }
+        }
+    }
 
     private val _draggedCommandItem = MutableStateFlow<CommandItem?>(null)
     val draggedCommandItem: StateFlow<CommandItem?> = _draggedCommandItem.asStateFlow()
@@ -71,22 +79,15 @@ class GameViewModel : ViewModel() {
         }
     }
 
-    // Управление кодовыми элементами
-    fun updateCodeItem(index: Int, item: CodePeace) {
-        _viewState.update {
-            val newList = it.codeItems.toMutableList()
-            newList[index] = item
-            it.copy(codeItems = newList.toImmutableList())
-        }
-    }
-
     fun resetCodeItems() {
         _viewState.update {
-            it.copy(codeItems = initialCodeItems)
+            it.copy(
+                codeItems = initialCodeItems,
+                commandItems = persistentListOf()
+            )
         }
     }
 
-    // Управление диалогами
     fun showVictoryDialog() {
         _viewState.update { it.copy(showVictoryDialog = true) }
     }
@@ -103,7 +104,6 @@ class GameViewModel : ViewModel() {
         _viewState.update { it.copy(showTryAgainDialog = false) }
     }
 
-    // Управление hover состоянием
     fun setHovered(isHovered: Boolean) {
         _viewState.update { it.copy(isHovered = isHovered && it.commandItems.isEmpty()) }
     }
@@ -112,7 +112,6 @@ class GameViewModel : ViewModel() {
         _viewState.update { it.copy(itemIndexHovered = index) }
     }
 
-    // Управление выполнением команд
     fun setExecutingCommandIndex(index: Int?) {
         _viewState.update { it.copy(executingCommandIndex = index) }
     }
@@ -147,11 +146,8 @@ class GameViewModel : ViewModel() {
     }
 
     private fun checkVictory(): Boolean {
-        val codeItems = _viewState.value.codeItems
-        val firstVariable = codeItems.getOrNull(0) as? CodePeace.IntVariable
-        val secondVariable = codeItems.getOrNull(1) as? CodePeace.IntVariable
-
-        return firstVariable?.value == 10 && secondVariable?.value == 5
+        val config = currentLevelConfig ?: return false
+        return config.victoryCondition.check(_viewState.value.codeItems)
     }
 
     private fun validateCommands(): Boolean {
@@ -190,4 +186,8 @@ class GameViewModel : ViewModel() {
         resetCodeItems()
         navigateToMenu()
     }
+
+    fun getCurrentLevelId(): Int = currentLevelId
+
+    fun hasNextLevel(): Boolean = LevelRepository.hasNextLevel(currentLevelId)
 }

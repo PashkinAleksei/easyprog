@@ -30,6 +30,7 @@ import ru.lemonapes.easyprog.android.ui.theme.AppShapes
 
 @Composable
 fun VictoryDialog(
+    hasNextLevel: Boolean,
     onReplay: () -> Unit,
     onMenu: () -> Unit,
     onNextLevel: () -> Unit,
@@ -48,11 +49,13 @@ fun VictoryDialog(
             contentDescription = stringResource(R.string.menu),
             onClick = onMenu
         )
-        DialogActionButton(
-            iconRes = R.drawable.ic_next,
-            contentDescription = stringResource(R.string.next_level),
-            onClick = onNextLevel
-        )
+        if (hasNextLevel) {
+            DialogActionButton(
+                iconRes = R.drawable.ic_next,
+                contentDescription = stringResource(R.string.next_level),
+                onClick = onNextLevel
+            )
+        }
     }
 }
 
