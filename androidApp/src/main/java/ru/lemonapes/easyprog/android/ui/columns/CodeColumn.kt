@@ -36,7 +36,7 @@ fun RowScope.CodeColumn(codeItems: ImmutableList<CodePeace>) {
             .border(
                 width = AppDimensions.columnBorderWidth,
                 color = AppColors.ColumnsBorderColor,
-                shape = AppShapes.cornerMedium
+                shape = AppShapes.CORNER_MEDIUM
             ),
         contentPadding = PaddingValues(AppDimensions.dp16),
         verticalArrangement = Arrangement.spacedBy(AppDimensions.dp8),

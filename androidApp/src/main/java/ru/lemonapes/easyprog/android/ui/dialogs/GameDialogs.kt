@@ -1,97 +1,158 @@
 package ru.lemonapes.easyprog.android.ui.dialogs
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import ru.lemonapes.easyprog.android.R
+import ru.lemonapes.easyprog.android.ui.theme.AppColors
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions
+import ru.lemonapes.easyprog.android.ui.theme.AppShapes
 
 @Composable
 fun VictoryDialog(
     onReplay: () -> Unit,
     onMenu: () -> Unit,
-    onNextLevel: () -> Unit
+    onNextLevel: () -> Unit,
 ) {
-    AlertDialog(
-        onDismissRequest = {},
-        title = { Text(stringResource(R.string.victory_title)) },
-        text = { Text(stringResource(R.string.victory_message)) },
-        confirmButton = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(AppDimensions.dp16)
-            ) {
-                IconButton(
-                    onClick = onReplay,
-                    modifier = Modifier.size(AppDimensions.dialogIconButtonSize)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_replay),
-                        contentDescription = stringResource(R.string.replay)
-                    )
-                }
-                IconButton(
-                    onClick = onMenu,
-                    modifier = Modifier.size(AppDimensions.dialogIconButtonSize)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_menu),
-                        contentDescription = stringResource(R.string.menu)
-                    )
-                }
-                IconButton(
-                    onClick = onNextLevel,
-                    modifier = Modifier.size(AppDimensions.dialogIconButtonSize)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_next),
-                        contentDescription = stringResource(R.string.next_level)
-                    )
-                }
-            }
-        }
-    )
+    GameDialog(
+        title = stringResource(R.string.victory_title),
+        message = stringResource(R.string.victory_message)
+    ) {
+        DialogActionButton(
+            iconRes = R.drawable.ic_replay,
+            contentDescription = stringResource(R.string.replay),
+            onClick = onReplay
+        )
+        DialogActionButton(
+            iconRes = R.drawable.ic_menu,
+            contentDescription = stringResource(R.string.menu),
+            onClick = onMenu
+        )
+        DialogActionButton(
+            iconRes = R.drawable.ic_next,
+            contentDescription = stringResource(R.string.next_level),
+            onClick = onNextLevel
+        )
+    }
 }
 
 @Composable
 fun TryAgainDialog(
     onReplay: () -> Unit,
-    onMenu: () -> Unit
+    onMenu: () -> Unit,
 ) {
-    AlertDialog(
+    GameDialog(
+        title = stringResource(R.string.try_again_title),
+        message = stringResource(R.string.try_again_message)
+    ) {
+        DialogActionButton(
+            iconRes = R.drawable.ic_replay,
+            contentDescription = stringResource(R.string.replay),
+            onClick = onReplay
+        )
+        DialogActionButton(
+            iconRes = R.drawable.ic_menu,
+            contentDescription = stringResource(R.string.menu),
+            onClick = onMenu
+        )
+    }
+}
+
+@Composable
+private fun GameDialog(
+    title: String,
+    message: String,
+    buttons: @Composable () -> Unit,
+) {
+    Dialog(
         onDismissRequest = {},
-        title = { Text(stringResource(R.string.try_again_title)) },
-        text = { Text(stringResource(R.string.try_again_message)) },
-        confirmButton = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(AppDimensions.dp16)
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .background(
+                    color = AppColors.COLOR_ACCENT,
+                    shape = AppShapes.CORNER_MEDIUM
+                )
+                .border(
+                    width = AppDimensions.columnBorderWidth,
+                    color = AppColors.MAIN_COLOR,
+                    shape = AppShapes.CORNER_MEDIUM
+                )
+                .padding(AppDimensions.dp32)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(AppDimensions.dp16)
             ) {
-                IconButton(
-                    onClick = onReplay,
-                    modifier = Modifier.size(AppDimensions.dialogIconButtonSize)
+                Text(
+                    text = title,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AppColors.MAIN_COLOR,
+                    textAlign = TextAlign.Center,
+                )
+                Text(
+                    text = message,
+                    fontSize = 18.sp,
+                    color = AppColors.MAIN_COLOR,
+                    textAlign = TextAlign.Center,
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(AppDimensions.dp16),
+                    modifier = Modifier.padding(top = AppDimensions.dp8)
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_replay),
-                        contentDescription = stringResource(R.string.replay)
-                    )
-                }
-                IconButton(
-                    onClick = onMenu,
-                    modifier = Modifier.size(AppDimensions.dialogIconButtonSize)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_menu),
-                        contentDescription = stringResource(R.string.menu)
-                    )
+                    buttons()
                 }
             }
         }
-    )
+    }
+}
+
+@Composable
+private fun DialogActionButton(
+    iconRes: Int,
+    contentDescription: String,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(AppDimensions.dialogIconButtonSize)
+            .background(
+                color = AppColors.MAIN_COLOR,
+                shape = AppShapes.CORNER_SMALL
+            )
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = contentDescription,
+            tint = AppColors.COLOR_ACCENT,
+            modifier = Modifier.size(AppDimensions.iconSize)
+        )
+    }
 }

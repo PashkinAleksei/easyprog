@@ -4,8 +4,8 @@ import androidx.compose.ui.graphics.Color
 
 object AppColors {
     val SourceItemBackground = Color(0xFF2196F3)
-    val CommandBackground = Color(0xFF673AB7)
-    val CommandAccent = Color(0xFFD9C9FF)
+    val MAIN_COLOR = Color(0xFF673AB7)
+    val COLOR_ACCENT = Color(0xFFD9C9FF)
     val ColumnsBorderColor = Color(0xFFD9C9FF)
     val ColumnsBorderColorSelected = Color(0xFF673AB7)
     val CommandBackgroundExecuting = Color(0xFFA7008E)

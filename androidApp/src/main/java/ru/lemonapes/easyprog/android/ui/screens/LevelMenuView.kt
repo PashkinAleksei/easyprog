@@ -80,13 +80,13 @@ private fun LevelItem(
         modifier = modifier
             .aspectRatio(1f)
             .background(
-                color = if (isUnlocked) AppColors.CommandAccent else AppColors.CommandBackground,
-                shape = AppShapes.cornerMedium
+                color = if (isUnlocked) AppColors.COLOR_ACCENT else AppColors.MAIN_COLOR,
+                shape = AppShapes.CORNER_MEDIUM
             )
             .border(
                 width = AppDimensions.columnBorderWidth,
-                color = if (isUnlocked) AppColors.CommandBackground else AppColors.CommandAccent,
-                shape = AppShapes.cornerMedium
+                color = if (isUnlocked) AppColors.MAIN_COLOR else AppColors.COLOR_ACCENT,
+                shape = AppShapes.CORNER_MEDIUM
             )
             .clickable(enabled = isUnlocked) { onClick() }
             .padding(AppDimensions.dp8),
@@ -96,7 +96,7 @@ private fun LevelItem(
             text = levelNumber.toString(),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = if (isUnlocked) AppColors.CommandBackground else AppColors.CommandAccent
+            color = if (isUnlocked) AppColors.MAIN_COLOR else AppColors.COLOR_ACCENT
         )
     }
 }

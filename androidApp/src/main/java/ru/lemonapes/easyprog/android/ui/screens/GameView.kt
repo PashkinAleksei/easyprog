@@ -63,7 +63,7 @@ fun GameView(
                     modifier = Modifier.size(AppDimensions.menuIconSize),
                     painter = painterResource(R.drawable.ic_menu),
                     contentDescription = stringResource(R.string.back_to_menu_description),
-                    tint = AppColors.CommandAccent
+                    tint = AppColors.COLOR_ACCENT
                 )
             }
             Spacer(Modifier.weight(1f))

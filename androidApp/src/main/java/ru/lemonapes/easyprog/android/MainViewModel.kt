@@ -105,7 +105,7 @@ class MainViewModel : ViewModel() {
 
     // Управление hover состоянием
     fun setHovered(isHovered: Boolean) {
-        _viewState.update { it.copy(isHovered = isHovered) }
+        _viewState.update { it.copy(isHovered = isHovered && it.commandItems.isEmpty()) }
     }
 
     fun setItemIndexHovered(index: Int?) {

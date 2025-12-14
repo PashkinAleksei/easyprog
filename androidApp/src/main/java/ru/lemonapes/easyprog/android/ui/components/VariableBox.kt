@@ -22,7 +22,7 @@ fun CodePeace.IntVariable.VariableBox(
 
     Box {
         Image(
-            modifier = modifier.clip(AppShapes.cornerSmall),
+            modifier = modifier.clip(AppShapes.CORNER_SMALL),
             painter = painterResource(R.drawable.ic_vector_box),
             contentDescription = stringResource(R.string.variable_box_description),
             colorFilter = ColorFilter.tint(color, blendMode = BlendMode.Color),

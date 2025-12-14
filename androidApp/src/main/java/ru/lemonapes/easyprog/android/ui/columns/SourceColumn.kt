@@ -42,7 +42,7 @@ fun RowScope.SourceColumn(viewModel: MainViewModel, sourceItems: ImmutableList<C
             .border(
                 width = AppDimensions.columnBorderWidth,
                 color = AppColors.ColumnsBorderColor,
-                shape = AppShapes.cornerMedium
+                shape = AppShapes.CORNER_MEDIUM
             ),
         verticalArrangement = Arrangement.spacedBy(AppDimensions.dp8),
         horizontalArrangement = Arrangement.spacedBy(AppDimensions.dp8),
@@ -66,8 +66,8 @@ fun RowScope.SourceColumn(viewModel: MainViewModel, sourceItems: ImmutableList<C
                             })
                     }
                     .background(
-                        color = AppColors.CommandBackground,
-                        shape = AppShapes.cornerMedium
+                        color = AppColors.MAIN_COLOR,
+                        shape = AppShapes.CORNER_MEDIUM
                     )
                     .padding(AppDimensions.dp8),
                 contentAlignment = Alignment.Center
@@ -76,7 +76,7 @@ fun RowScope.SourceColumn(viewModel: MainViewModel, sourceItems: ImmutableList<C
                     modifier = Modifier.size(AppDimensions.sourceCodeIconSize),
                     painter = painterResource(item.iconRes),
                     contentDescription = stringResource(item.textRes),
-                    colorFilter = ColorFilter.tint(AppColors.CommandAccent)
+                    colorFilter = ColorFilter.tint(AppColors.COLOR_ACCENT)
                 )
             }
         }

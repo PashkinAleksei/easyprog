@@ -24,7 +24,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -50,7 +49,7 @@ fun RowScope.CommandsColumn(
     viewState: MainViewState,
     viewModel: MainViewModel,
 ) {
-    val isColumnVisualHovered = viewState.isHovered && viewState.commandItems.isEmpty()
+    val isColumnVisualHovered = viewState.isHovered
 
     val columnDragAndDropTarget = remember(viewModel) { viewModel.createColumnDragAndDropTarget() }
     val borderWidth = if (isColumnVisualHovered) {
@@ -72,7 +71,7 @@ fun RowScope.CommandsColumn(
             .border(
                 width = borderWidth,
                 color = borderColor,
-                shape = AppShapes.cornerMedium
+                shape = AppShapes.CORNER_MEDIUM
             )
             .dragAndDropTextTarget(columnDragAndDropTarget)
     ) {
@@ -146,9 +145,8 @@ fun RowScope.CommandsColumn(
                                 )
                             }
                             val botItemDragAndDropTarget = remember(index, item) {
-                                createBotItemDragAndDropTarget(
+                                viewModel.createBotItemDragAndDropTarget(
                                     index = index,
-                                    viewModel = viewModel,
                                     commandItems = viewState.commandItems,
                                     draggedCommandItem = viewModel.draggedCommandItem,
                                 )

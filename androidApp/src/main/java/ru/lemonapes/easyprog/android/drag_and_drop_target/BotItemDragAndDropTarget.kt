@@ -10,9 +10,8 @@ import ru.lemonapes.easyprog.android.commands.CommandItem
 import ru.lemonapes.easyprog.android.toItem
 import kotlin.math.max
 
-fun createBotItemDragAndDropTarget(
+fun MainViewModel.createBotItemDragAndDropTarget(
     index: Int,
-    viewModel: MainViewModel,
     commandItems: ImmutableList<CommandItem>,
     draggedCommandItem: StateFlow<CommandItem?>,
 ): DragAndDropTarget {
@@ -20,15 +19,14 @@ fun createBotItemDragAndDropTarget(
         override fun onDrop(event: DragAndDropEvent): Boolean {
             event.toItem(draggedCommandItem.value)
                 ?.let { item ->
-                    viewModel.addCommandAtIndex(max(index + 1, commandItems.lastIndex), item)
+                    addCommandAtIndex(max(index + 1, commandItems.lastIndex), item)
                 }
-            viewModel.setItemIndexHovered(null)
+            setItemIndexHovered(null)
             return true
         }
 
         override fun onEntered(event: DragAndDropEvent) {
-            log("item $index onEntered")
-            viewModel.setItemIndexHovered(index + 1)
+            setItemIndexHovered(index + 1)
         }
     }
 }

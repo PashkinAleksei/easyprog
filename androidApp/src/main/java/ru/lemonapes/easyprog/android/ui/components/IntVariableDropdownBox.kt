@@ -44,21 +44,21 @@ fun IntVariableDropdownBox(
             modifier = Modifier
                 .size(AppDimensions.commandVariableBoxSize)
                 .background(
-                    color = AppColors.CommandAccent,
-                    shape = AppShapes.cornerSmall
+                    color = AppColors.COLOR_ACCENT,
+                    shape = AppShapes.CORNER_SMALL
                 )
         ) {
             Text(
                 text = stringResource(R.string.unknown_variable),
-                color = AppColors.CommandBackground,
+                color = AppColors.MAIN_COLOR,
                 textAlign = TextAlign.Center,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = AppColors.CommandAccent,
-                        shape = AppShapes.cornerSmall
+                        color = AppColors.COLOR_ACCENT,
+                        shape = AppShapes.CORNER_SMALL
                     )
                     .align(Alignment.Center)
             )

@@ -44,7 +44,7 @@ fun TwoVariableCommand.CommandRow(
     val variables = remember(codeItems) {
         codeItems.filterIsInstance<CodePeace.IntVariable>().map { it }.toImmutableList()
     }
-    val backgroundColor = if (isExecuting) AppColors.CommandBackgroundExecuting else AppColors.CommandBackground
+    val backgroundColor = if (isExecuting) AppColors.CommandBackgroundExecuting else AppColors.MAIN_COLOR
     val text = stringResource(textRes)
 
     Row(
@@ -53,7 +53,7 @@ fun TwoVariableCommand.CommandRow(
             .padding(horizontal = AppDimensions.dp16)
             .background(
                 color = backgroundColor,
-                shape = AppShapes.cornerMedium
+                shape = AppShapes.CORNER_MEDIUM
             )
             .dragAndDropSource { _ ->
                 viewModel.setDraggedCommandItem(viewModel.removeCommand(index))
@@ -68,8 +68,8 @@ fun TwoVariableCommand.CommandRow(
             is CopyValueCommand, is MoveValueCommand ->
                 Box(
                     modifier = Modifier
-                        .clip(AppShapes.cornerMedium)
-                        .background(AppColors.CommandAccent)
+                        .clip(AppShapes.CORNER_MEDIUM)
+                        .background(AppColors.COLOR_ACCENT)
 
                 ) {
                     Box(Modifier.padding(vertical = AppDimensions.dp4, horizontal = AppDimensions.dp8)) {
@@ -77,7 +77,7 @@ fun TwoVariableCommand.CommandRow(
                             modifier = Modifier.size(AppDimensions.iconSize),
                             painter = painterResource(iconRes),
                             contentDescription = stringResource(textRes),
-                            colorFilter = ColorFilter.tint(AppColors.CommandBackground),
+                            colorFilter = ColorFilter.tint(AppColors.MAIN_COLOR),
                         )
                     }
                 }
@@ -112,7 +112,7 @@ fun TwoVariableCommand.CommandRow(
                 .size(28.dp),
             painter = painterResource(R.drawable.arrow_right_alt),
             contentDescription = stringResource(R.string.arrow_to_description),
-            colorFilter = ColorFilter.tint(AppColors.CommandAccent),
+            colorFilter = ColorFilter.tint(AppColors.COLOR_ACCENT),
         )
 
         Spacer(modifier = Modifier.width(AppDimensions.dp2))
