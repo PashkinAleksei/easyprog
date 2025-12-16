@@ -14,10 +14,13 @@ import kotlinx.coroutines.launch
 import ru.lemonapes.easyprog.android.commands.CommandItem
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
+import ru.lemonapes.easyprog.android.data.GameRepository
 import ru.lemonapes.easyprog.android.levels.LevelConfig
 import ru.lemonapes.easyprog.android.levels.LevelRepository
 
 class GameViewModel : ViewModel() {
+
+    private val gameRepository: GameRepository = EasyProgApplication.getInstance().gameRepository
 
     private var currentLevelConfig: LevelConfig? = null
     private var initialCodeItems: ImmutableList<CodePeace> = persistentListOf()
@@ -40,6 +43,22 @@ class GameViewModel : ViewModel() {
                     showLevelInfoDialog = true,
                 )
             }
+
+            viewModelScope.launch {
+                val savedCommands = gameRepository.getSavedCommands(levelId)
+                if (savedCommands.isNotEmpty()) {
+                    _viewState.update { it.copy(commandItems = savedCommands) }
+                }
+            }
+        }
+    }
+
+    private fun saveCommandsToDb() {
+        viewModelScope.launch {
+            gameRepository.saveCommands(
+                levelId = _viewState.value.levelId,
+                commands = _viewState.value.commandItems
+            )
         }
     }
 
@@ -53,6 +72,7 @@ class GameViewModel : ViewModel() {
     // Управление командами
     fun addCommand(command: CommandItem) {
         _viewState.update { it.copy(commandItems = (it.commandItems + command).toImmutableList()) }
+        saveCommandsToDb()
     }
 
     fun addCommandAtIndex(index: Int, command: CommandItem) {
@@ -61,6 +81,7 @@ class GameViewModel : ViewModel() {
             newList.add(index, command)
             it.copy(commandItems = newList.toImmutableList())
         }
+        saveCommandsToDb()
     }
 
     fun removeCommand(index: Int): CommandItem? {
@@ -70,6 +91,7 @@ class GameViewModel : ViewModel() {
             removedItem = newList.removeAt(index)
             it.copy(commandItems = newList.toImmutableList())
         }
+        saveCommandsToDb()
         return removedItem
     }
 
@@ -79,14 +101,12 @@ class GameViewModel : ViewModel() {
             newList[index] = command
             it.copy(commandItems = newList.toImmutableList())
         }
+        saveCommandsToDb()
     }
 
     fun resetCodeItems() {
         _viewState.update {
-            it.copy(
-                codeItems = initialCodeItems,
-                commandItems = persistentListOf()
-            )
+            it.copy(codeItems = initialCodeItems)
         }
     }
 
@@ -148,6 +168,7 @@ class GameViewModel : ViewModel() {
 
             // Проверка условия победы
             if (checkVictory()) {
+                gameRepository.markLevelCompleted(_viewState.value.levelId)
                 showVictoryDialog()
             } else {
                 showTryAgainDialog()
