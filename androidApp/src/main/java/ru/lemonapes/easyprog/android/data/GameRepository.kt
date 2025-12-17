@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import ru.lemonapes.easyprog.android.commands.CommandItem
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
+import ru.lemonapes.easyprog.android.commands.IncValueCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 
 class GameRepository(
@@ -37,6 +38,10 @@ class GameRepository(
                     source = entity.sourceIndex,
                     target = entity.targetIndex,
                 )
+                COMMAND_TYPE_INC -> IncValueCommand(
+                    id = Calendar.getInstance().timeInMillis + entity.orderIndex,
+                    target = entity.targetIndex,
+                )
                 else -> throw IllegalArgumentException("Unknown command type: ${entity.commandType}")
             }
         }.toImmutableList()
@@ -50,14 +55,17 @@ class GameRepository(
                 commandType = when (command) {
                     is CopyValueCommand -> COMMAND_TYPE_COPY
                     is MoveValueCommand -> COMMAND_TYPE_MOVE
+                    is IncValueCommand -> COMMAND_TYPE_INC
                 },
                 sourceIndex = when (command) {
                     is CopyValueCommand -> command.source
                     is MoveValueCommand -> command.source
+                    is IncValueCommand -> null
                 },
                 targetIndex = when (command) {
                     is CopyValueCommand -> command.target
                     is MoveValueCommand -> command.target
+                    is IncValueCommand -> command.target
                 },
             )
         }
@@ -71,5 +79,6 @@ class GameRepository(
     companion object {
         private const val COMMAND_TYPE_COPY = "copy"
         private const val COMMAND_TYPE_MOVE = "move"
+        private const val COMMAND_TYPE_INC = "inc"
     }
 }

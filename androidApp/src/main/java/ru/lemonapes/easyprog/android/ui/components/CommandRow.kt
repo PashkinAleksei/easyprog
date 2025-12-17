@@ -27,7 +27,9 @@ import ru.lemonapes.easyprog.android.CodePeace
 import ru.lemonapes.easyprog.android.GameViewModel
 import ru.lemonapes.easyprog.android.R
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
+import ru.lemonapes.easyprog.android.commands.IncValueCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
+import ru.lemonapes.easyprog.android.commands.SingleVariableCommand
 import ru.lemonapes.easyprog.android.commands.TwoVariableCommand
 import ru.lemonapes.easyprog.android.ui.theme.AppColors
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions
@@ -129,6 +131,73 @@ fun TwoVariableCommand.CommandRow(
                     )
 
                     is MoveValueCommand -> viewModel.updateCommand(
+                        index,
+                        copy(target = codeItems.indexOf(variable))
+                    )
+                }
+            }
+        )
+
+        Spacer(modifier = Modifier.weight(0.7f))
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun SingleVariableCommand.CommandRow(
+    index: Int,
+    codeItems: ImmutableList<CodePeace>,
+    isExecuting: Boolean,
+    viewModel: GameViewModel,
+) {
+    val variables = remember(codeItems) {
+        codeItems.filterIsInstance<CodePeace.IntVariable>().map { it }.toImmutableList()
+    }
+    val backgroundColor = if (isExecuting) AppColors.CommandBackgroundExecuting else AppColors.MAIN_COLOR
+    val text = stringResource(textRes)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AppDimensions.dp16)
+            .background(
+                color = backgroundColor,
+                shape = AppShapes.CORNER_MEDIUM
+            )
+            .dragAndDropSource { _ ->
+                viewModel.setDraggedCommandItem(viewModel.removeCommand(index))
+                DragAndDropTransferData(
+                    ClipData.newPlainText("dragged_item", text)
+                )
+            }
+            .padding(AppDimensions.dp12),
+    ) {
+        Spacer(modifier = Modifier.weight(0.7f))
+
+        Box(
+            modifier = Modifier
+                .clip(AppShapes.CORNER_MEDIUM)
+                .background(AppColors.COLOR_ACCENT)
+        ) {
+            Box(Modifier.padding(vertical = AppDimensions.dp4, horizontal = AppDimensions.dp8)) {
+                Image(
+                    modifier = Modifier.size(AppDimensions.iconSize),
+                    painter = painterResource(iconRes),
+                    contentDescription = stringResource(textRes),
+                    colorFilter = ColorFilter.tint(AppColors.MAIN_COLOR),
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(0.5f))
+
+        IntVariableDropdownBox(
+            selectedIndex = target,
+            codeItems = codeItems,
+            variables = variables,
+            onVariableSelected = { variable ->
+                when (this@CommandRow) {
+                    is IncValueCommand -> viewModel.updateCommand(
                         index,
                         copy(target = codeItems.indexOf(variable))
                     )

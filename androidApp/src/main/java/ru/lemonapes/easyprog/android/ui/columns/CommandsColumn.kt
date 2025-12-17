@@ -34,6 +34,7 @@ import ru.lemonapes.easyprog.android.MainViewState
 import ru.lemonapes.easyprog.android.MyApplicationTheme
 import ru.lemonapes.easyprog.android.R
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
+import ru.lemonapes.easyprog.android.commands.IncValueCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 import ru.lemonapes.easyprog.android.drag_and_drop_target.createBotItemDragAndDropTarget
 import ru.lemonapes.easyprog.android.drag_and_drop_target.createColumnDragAndDropTarget
@@ -117,6 +118,13 @@ fun RowScope.CommandsColumn(
                                 )
 
                                 is MoveValueCommand -> item.CommandRow(
+                                    index = index,
+                                    codeItems = viewState.codeItems,
+                                    isExecuting = viewState.executingCommandIndex == index,
+                                    viewModel = viewModel
+                                )
+
+                                is IncValueCommand -> item.CommandRow(
                                     index = index,
                                     codeItems = viewState.codeItems,
                                     isExecuting = viewState.executingCommandIndex == index,

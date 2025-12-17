@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.lemonapes.easyprog.android.commands.CommandItem
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
+import ru.lemonapes.easyprog.android.commands.IncValueCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 import ru.lemonapes.easyprog.android.data.GameRepository
 import ru.lemonapes.easyprog.android.levels.LevelConfig
@@ -186,6 +187,7 @@ class GameViewModel : ViewModel() {
             when (command) {
                 is CopyValueCommand -> command.source != null && command.target != null
                 is MoveValueCommand -> command.source != null && command.target != null
+                is IncValueCommand -> command.target != null
             }
         }
     }
