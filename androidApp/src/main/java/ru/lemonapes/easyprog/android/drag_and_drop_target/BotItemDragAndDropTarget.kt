@@ -18,7 +18,7 @@ fun GameViewModel.createBotItemDragAndDropTarget(
         override fun onDrop(event: DragAndDropEvent): Boolean {
             event.toItem(draggedCommandItem.value)
                 ?.let { item ->
-                    addCommandAtIndex(max(index + 1, commandItems.lastIndex), item)
+                    addCommandAtIndex(index + 1, item)
                 }
             setItemIndexHovered(null)
             return true

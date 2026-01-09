@@ -26,8 +26,8 @@ class GameViewModel : ViewModel() {
     private var currentLevelConfig: LevelConfig? = null
     private var initialCodeItems: ImmutableList<CodePeace> = persistentListOf()
 
-    private val _viewState = MutableStateFlow(MainViewState())
-    val viewState: StateFlow<MainViewState> = _viewState.asStateFlow()
+    private val _viewState = MutableStateFlow(GameViewState())
+    val viewState: StateFlow<GameViewState> = _viewState.asStateFlow()
 
     fun loadLevel(levelId: Int) {
         currentLevelConfig = LevelRepository.getLevel(levelId)
@@ -35,7 +35,7 @@ class GameViewModel : ViewModel() {
         currentLevelConfig?.let { config ->
             initialCodeItems = config.codeItems
             _viewState.update {
-                MainViewState(
+                GameViewState(
                     levelId = levelId,
                     codeItems = config.codeItems,
                     sourceItems = config.availableCommands,
@@ -80,7 +80,10 @@ class GameViewModel : ViewModel() {
         _viewState.update {
             val newList = it.commandItems.toMutableList()
             newList.add(index, command)
-            it.copy(commandItems = newList.toImmutableList())
+            it.copy(
+                commandItems = newList.toImmutableList(),
+                scrollToIndex = index
+            )
         }
         saveCommandsToDb()
     }
@@ -145,6 +148,10 @@ class GameViewModel : ViewModel() {
 
     fun setExecutingCommandIndex(index: Int?) {
         _viewState.update { it.copy(executingCommandIndex = index) }
+    }
+
+    fun clearScrollToIndex() {
+        _viewState.update { it.copy(scrollToIndex = null) }
     }
 
     fun executeCommands() {

@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -30,7 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.lemonapes.easyprog.android.GameViewModel
-import ru.lemonapes.easyprog.android.MainViewState
+import ru.lemonapes.easyprog.android.GameViewState
 import ru.lemonapes.easyprog.android.MyApplicationTheme
 import ru.lemonapes.easyprog.android.R
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
@@ -47,7 +49,7 @@ import ru.lemonapes.easyprog.android.ui.theme.AppShapes
 
 @Composable
 fun RowScope.CommandsColumn(
-    viewState: MainViewState,
+    viewState: GameViewState,
     viewModel: GameViewModel,
 ) {
     val isColumnVisualHovered = viewState.isHovered
@@ -86,7 +88,14 @@ fun RowScope.CommandsColumn(
                 colorFilter = ColorFilter.tint(boxIconColor),
             )
         } else {
+            val listState = rememberLazyListState()
+
+            LaunchedEffect(viewState.scrollToIndex) {
+                viewModel.scrollToAddedItemIndex(viewState, listState)
+            }
+
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxSize(),
                 contentPadding = PaddingValues(bottom = AppDimensions.dp8),
@@ -198,6 +207,46 @@ private fun CommandsColumnPreview() {
                     viewModel = viewModel
                 )
             }
+        }
+    }
+}
+
+private suspend fun GameViewModel.scrollToAddedItemIndex(viewState: GameViewState, listState: LazyListState) {
+    viewState.scrollToIndex?.let { index ->
+        if (index in viewState.commandItems.indices) {
+            val layoutInfo = listState.layoutInfo
+            val visibleItem = layoutInfo.visibleItemsInfo.find { it.index == index }
+
+            if (visibleItem != null) {
+                // Элемент виден, проверяем насколько
+                val itemEnd = visibleItem.offset + visibleItem.size
+                val viewportEnd = layoutInfo.viewportEndOffset
+
+                // Если элемент виден не полностью снизу
+                if (itemEnd > viewportEnd) {
+                    // Прокручиваем так, чтобы элемент был внизу viewport с учетом padding
+                    val scrollOffset =
+                        -(layoutInfo.viewportSize.height - visibleItem.size - layoutInfo.afterContentPadding)
+                    listState.animateScrollToItem(index, scrollOffset)
+                }
+                // Если элемент полностью виден, не прокручиваем
+            } else {
+                // Элемент не виден
+                // Определяем, добавлен ли элемент снизу (после последнего видимого)
+                val lastVisibleIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+
+                if (index > lastVisibleIndex) {
+                    // Элемент ниже видимой области - показываем его внизу с учетом padding
+                    val estimatedItemSize = layoutInfo.visibleItemsInfo.firstOrNull()?.size ?: 0
+                    val scrollOffset =
+                        -(layoutInfo.viewportSize.height - estimatedItemSize - layoutInfo.afterContentPadding)
+                    listState.animateScrollToItem(index, scrollOffset)
+                } else {
+                    // Элемент выше видимой области - показываем вверху
+                    listState.animateScrollToItem(index)
+                }
+            }
+            clearScrollToIndex()
         }
     }
 }

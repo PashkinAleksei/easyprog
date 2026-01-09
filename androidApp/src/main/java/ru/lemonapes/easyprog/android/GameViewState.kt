@@ -4,7 +4,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import ru.lemonapes.easyprog.android.commands.CommandItem
 
-data class MainViewState(
+data class GameViewState(
     val levelId: Int = 1,
     val codeItems: ImmutableList<CodePeace> = persistentListOf(),
     val commandItems: ImmutableList<CommandItem> = persistentListOf(),
@@ -17,4 +17,5 @@ data class MainViewState(
     val executingCommandIndex: Int? = null,
     val isHovered: Boolean = false,
     val itemIndexHovered: Int? = null,
+    val scrollToIndex: Int? = null,
 )

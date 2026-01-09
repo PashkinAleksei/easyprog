@@ -1,17 +1,23 @@
 package ru.lemonapes.easyprog.android.levels
 
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toPersistentList
+import kotlinx.collections.immutable.toPersistentSet
 import ru.lemonapes.easyprog.android.CodePeace
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
+import ru.lemonapes.easyprog.android.commands.IncValueCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 
 /**
  * Справочник всех уровней игры.
  */
 object LevelRepository {
-
-    private val levels: Map<Int, LevelConfig> = buildMap {
-        put(
+    private val levels: ImmutableMap<Int, LevelConfig> = persistentMapOf(
+        Pair(
             1, LevelConfig(
                 id = 1,
                 title = "Копирование",
@@ -25,9 +31,9 @@ object LevelRepository {
                 ),
                 victoryCondition = VictoryCondition.VariableEquals(index = 1, expectedValue = 5),
             )
-        )
+        ),
 
-        put(
+        Pair(
             2, LevelConfig(
                 id = 2,
                 title = "Перемещение",
@@ -44,9 +50,9 @@ object LevelRepository {
                     VictoryCondition.VariableIsNull(index = 0),
                 ),
             )
-        )
+        ),
 
-        put(
+        Pair(
             3, LevelConfig(
                 id = 3,
                 title = "Обмен",
@@ -65,9 +71,9 @@ object LevelRepository {
                     VictoryCondition.VariableEquals(index = 1, expectedValue = 5),
                 ),
             )
-        )
+        ),
 
-        put(
+        Pair(
             4, LevelConfig(
                 id = 4,
                 title = "Клонирование",
@@ -85,9 +91,9 @@ object LevelRepository {
                     VictoryCondition.VariableEquals(index = 2, expectedValue = 7),
                 ),
             )
-        )
+        ),
 
-        put(
+        Pair(
             5, LevelConfig(
                 id = 5,
                 title = "Сортировка",
@@ -103,9 +109,9 @@ object LevelRepository {
                 ),
                 victoryCondition = VictoryCondition.VariablesSortedAscending(0, 1),
             )
-        )
+        ),
 
-        put(
+        Pair(
             6, LevelConfig(
                 id = 6,
                 title = "Замена",
@@ -122,9 +128,9 @@ object LevelRepository {
                     VictoryCondition.VariableIsNull(index = 1),
                 ),
             )
-        )
+        ),
 
-        put(
+        Pair(
             7, LevelConfig(
                 id = 7,
                 title = "Ротация",
@@ -145,9 +151,9 @@ object LevelRepository {
                     VictoryCondition.VariableEquals(index = 2, expectedValue = 1),
                 ),
             )
-        )
+        ),
 
-        put(
+        Pair(
             8, LevelConfig(
                 id = 8,
                 title = "Заполнение",
@@ -168,9 +174,9 @@ object LevelRepository {
                     VictoryCondition.VariableEquals(index = 3, expectedValue = 42),
                 ),
             )
-        )
+        ),
 
-        put(
+        Pair(
             9, LevelConfig(
                 id = 9,
                 title = "Сдвиг",
@@ -191,9 +197,9 @@ object LevelRepository {
                     VictoryCondition.VariableEquals(index = 3, expectedValue = 30),
                 ),
             )
-        )
+        ),
 
-        put(
+        Pair(
             10, LevelConfig(
                 id = 10,
                 title = "Полная сортировка",
@@ -210,12 +216,142 @@ object LevelRepository {
                 ),
                 victoryCondition = VictoryCondition.VariablesSortedAscending(0, 1, 2),
             )
-        )
-    }
+        ),
+
+        Pair(
+            11, LevelConfig(
+                id = 11,
+                title = "Первый инкремент",
+                description = "Увеличь значение переменной на 1",
+                codeItems = persistentListOf(
+                    CodePeace.IntVariable(id = 1, value = 5, colorIndex = 0),
+                    CodePeace.IntVariable(id = 2, value = null, colorIndex = 1),
+                ),
+                availableCommands = persistentListOf(
+                    IncValueCommand(),
+                ),
+                victoryCondition = VictoryCondition.VariableEquals(index = 0, expectedValue = 6),
+            )
+        ),
+
+        Pair(
+            12, LevelConfig(
+                id = 12,
+                title = "Двойной инкремент",
+                description = "Увеличь значение переменной дважды",
+                codeItems = persistentListOf(
+                    CodePeace.IntVariable(id = 1, value = 0, colorIndex = 0),
+                    CodePeace.IntVariable(id = 2, value = null, colorIndex = 1),
+                ),
+                availableCommands = persistentListOf(
+                    IncValueCommand(),
+                ),
+                victoryCondition = VictoryCondition.VariableEquals(index = 0, expectedValue = 2),
+            )
+        ),
+
+        Pair(
+            13, LevelConfig(
+                id = 13,
+                title = "Копирование и увеличение",
+                description = "Скопируй значение и увеличь копию на 1",
+                codeItems = persistentListOf(
+                    CodePeace.IntVariable(id = 1, value = 10, colorIndex = 0),
+                    CodePeace.IntVariable(id = 2, value = null, colorIndex = 1),
+                ),
+                availableCommands = persistentListOf(
+                    CopyValueCommand(),
+                    IncValueCommand(),
+                ),
+                victoryCondition = VictoryCondition.All(
+                    VictoryCondition.VariableEquals(index = 0, expectedValue = 10),
+                    VictoryCondition.VariableEquals(index = 1, expectedValue = 11),
+                ),
+            )
+        ),
+
+        Pair(
+            14, LevelConfig(
+                id = 14,
+                title = "Равенство через инкремент",
+                description = "Сделай обе переменные равными, используя инкремент",
+                codeItems = persistentListOf(
+                    CodePeace.IntVariable(id = 1, value = 5, colorIndex = 0),
+                    CodePeace.IntVariable(id = 2, value = 4, colorIndex = 1),
+                ),
+                availableCommands = persistentListOf(
+                    IncValueCommand(),
+                ),
+                victoryCondition = VictoryCondition.VariablesEqual(index1 = 0, index2 = 1),
+            )
+        ),
+
+        Pair(
+            15, LevelConfig(
+                id = 15,
+                title = "Лестница",
+                description = "Создай последовательность 1, 2, 3",
+                codeItems = persistentListOf(
+                    CodePeace.IntVariable(id = 1, value = 0, colorIndex = 0),
+                    CodePeace.IntVariable(id = 2, value = 0, colorIndex = 1),
+                    CodePeace.IntVariable(id = 3, value = 0, colorIndex = 2),
+                ),
+                availableCommands = persistentListOf(
+                    IncValueCommand(),
+                    CopyValueCommand(),
+                ),
+                victoryCondition = VictoryCondition.All(
+                    VictoryCondition.VariableEquals(index = 0, expectedValue = 1),
+                    VictoryCondition.VariableEquals(index = 1, expectedValue = 2),
+                    VictoryCondition.VariableEquals(index = 2, expectedValue = 3),
+                ),
+            )
+        ),
+
+        Pair(
+            16, LevelConfig(
+                id = 16,
+                title = "Удвоение значения",
+                description = "Удвой значение переменной",
+                codeItems = persistentListOf(
+                    CodePeace.IntVariable(id = 1, value = 4, colorIndex = 0),
+                ),
+                availableCommands = persistentListOf(
+                    CopyValueCommand(),
+                    IncValueCommand(),
+                ),
+                victoryCondition = VictoryCondition.VariableEquals(index = 0, expectedValue = 8),
+            )
+        ),
+
+        Pair(
+            17, LevelConfig(
+                id = 17,
+                title = "Счетчик",
+                description = "Создай последовательность 1, 2, 3, 4 из пустых переменных",
+                codeItems = persistentListOf(
+                    CodePeace.IntVariable(id = 1, value = null, colorIndex = 0),
+                    CodePeace.IntVariable(id = 2, value = null, colorIndex = 1),
+                    CodePeace.IntVariable(id = 3, value = null, colorIndex = 2),
+                    CodePeace.IntVariable(id = 4, value = null, colorIndex = 3),
+                ),
+                availableCommands = persistentListOf(
+                    IncValueCommand(),
+                    CopyValueCommand(),
+                ),
+                victoryCondition = VictoryCondition.All(
+                    VictoryCondition.VariableEquals(index = 0, expectedValue = 1),
+                    VictoryCondition.VariableEquals(index = 1, expectedValue = 2),
+                    VictoryCondition.VariableEquals(index = 2, expectedValue = 3),
+                    VictoryCondition.VariableEquals(index = 3, expectedValue = 4),
+                ),
+            )
+        ),
+    )
 
     fun getLevel(levelId: Int): LevelConfig? = levels[levelId]
 
-    fun getAllLevels(): List<LevelConfig> = levels.values.toList().sortedBy { it.id }
+    fun getAllLevels(): ImmutableList<LevelConfig> = levels.values.toList().sortedBy { it.id }.toPersistentList()
 
     fun getLevelCount(): Int = levels.size
 
