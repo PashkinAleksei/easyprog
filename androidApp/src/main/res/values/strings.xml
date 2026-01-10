@@ -5,6 +5,8 @@
     <string name="command_copy_text">Копировать</string>
     <string name="command_move_text">Переместить</string>
     <string name="command_inc_text">Увеличить</string>
+    <string name="command_goto_start">Метка</string>
+    <string name="command_goto_target">Переход</string>
     <string name="arrow_to_description">to</string>
     <string name="unknown_variable">?</string>
     <string name="variable_box_description">Box</string>

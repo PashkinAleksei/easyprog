@@ -6,19 +6,21 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.flow.StateFlow
 import ru.lemonapes.easyprog.android.GameViewModel
 import ru.lemonapes.easyprog.android.commands.CommandItem
-import ru.lemonapes.easyprog.android.toItem
-import kotlin.math.max
+import ru.lemonapes.easyprog.android.toCommandItem
 
 fun GameViewModel.createBotItemDragAndDropTarget(
     index: Int,
-    commandItems: ImmutableList<CommandItem>,
-    draggedCommandItem: StateFlow<CommandItem?>,
 ): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            event.toItem(draggedCommandItem.value)
-                ?.let { item ->
-                    addCommandAtIndex(index + 1, item)
+            val isNewItem = event.label == "new_item"
+            event.toCommandItem(draggedCommandItem.value)
+                ?.let { command ->
+                    addCommandAtIndex(
+                        index = index + 1,
+                        command = command,
+                        isNewItem = isNewItem
+                    )
                 }
             setItemIndexHovered(null)
             return true

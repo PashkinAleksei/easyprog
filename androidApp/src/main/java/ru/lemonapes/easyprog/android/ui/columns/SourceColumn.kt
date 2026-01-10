@@ -60,7 +60,7 @@ fun RowScope.SourceColumn(viewModel: GameViewModel, sourceItems: ImmutableList<C
                                 viewModel.setDraggedCommandItem(item.mkCopy())
                                 startTransfer(
                                     transferData = DragAndDropTransferData(
-                                        clipData = ClipData.newPlainText("adding_item", text)
+                                        clipData = ClipData.newPlainText("new_item", text)
                                     )
                                 )
                             })

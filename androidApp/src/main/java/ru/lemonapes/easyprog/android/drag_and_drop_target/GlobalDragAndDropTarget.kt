@@ -2,21 +2,25 @@ package ru.lemonapes.easyprog.android.drag_and_drop_target
 
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
-import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import ru.lemonapes.easyprog.Utils.Companion.log
 import ru.lemonapes.easyprog.android.GameViewModel
+import ru.lemonapes.easyprog.android.commands.GotoCommand
+import ru.lemonapes.easyprog.android.commands.PairCommand
+import ru.lemonapes.easyprog.android.toCommandItem
 
 fun GameViewModel.createGlobalDragAndDropTarget(): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            val label = event.toAndroidDragEvent()
-                .clipData
-                ?.description
-                ?.label
-                ?.toString()
 
+            val isNewItem = event.label == "new_item"
+            event.toCommandItem(draggedCommandItem.value)?.let { command ->
+                when (command) {
+                    is PairCommand -> if (!isNewItem) removeCommandPair(command)
+                    else -> Unit
+                }
+            }
             setItemIndexHovered(null)
-            return label != "adding_item"
+            return !isNewItem
         }
 
         override fun onEntered(event: DragAndDropEvent) {

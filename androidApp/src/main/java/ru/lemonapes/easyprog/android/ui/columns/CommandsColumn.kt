@@ -36,6 +36,7 @@ import ru.lemonapes.easyprog.android.GameViewState
 import ru.lemonapes.easyprog.android.MyApplicationTheme
 import ru.lemonapes.easyprog.android.R
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
+import ru.lemonapes.easyprog.android.commands.GotoCommand
 import ru.lemonapes.easyprog.android.commands.IncValueCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 import ru.lemonapes.easyprog.android.drag_and_drop_target.createBotItemDragAndDropTarget
@@ -139,6 +140,12 @@ fun RowScope.CommandsColumn(
                                     isExecuting = viewState.executingCommandIndex == index,
                                     viewModel = viewModel
                                 )
+
+                                is GotoCommand -> item.CommandRow(
+                                    index = index,
+                                    isExecuting = viewState.executingCommandIndex == index,
+                                    viewModel = viewModel
+                                )
                             }
                             if (index == viewState.commandItems.lastIndex) {
                                 if ((viewState.itemIndexHovered ?: -1) > viewState.commandItems.lastIndex) {
@@ -157,16 +164,10 @@ fun RowScope.CommandsColumn(
                                 .matchParentSize()
                         ) {
                             val topItemDragAndDropTarget = remember(index, item) {
-                                viewModel.createTopItemDragAndDropTarget(
-                                    index = index,
-                                )
+                                viewModel.createTopItemDragAndDropTarget(index)
                             }
                             val botItemDragAndDropTarget = remember(index, item) {
-                                viewModel.createBotItemDragAndDropTarget(
-                                    index = index,
-                                    commandItems = viewState.commandItems,
-                                    draggedCommandItem = viewModel.draggedCommandItem,
-                                )
+                                viewModel.createBotItemDragAndDropTarget(index)
                             }
                             Box(
                                 modifier = Modifier
@@ -196,8 +197,8 @@ private fun CommandsColumnPreview() {
             val viewModel = viewModel<GameViewModel>()
 
             LaunchedEffect(Unit) {
-                viewModel.addCommand(CopyValueCommand(1, 0, 1))
-                viewModel.addCommand(MoveValueCommand(2, 1, 2))
+                viewModel.addCommand(CopyValueCommand(1, 0, 1), true)
+                viewModel.addCommand(MoveValueCommand(2, 1, 2), true)
             }
 
             val viewState by viewModel.viewState.collectAsState()

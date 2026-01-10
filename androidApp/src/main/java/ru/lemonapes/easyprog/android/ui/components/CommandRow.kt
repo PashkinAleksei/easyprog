@@ -27,6 +27,7 @@ import ru.lemonapes.easyprog.android.CodePeace
 import ru.lemonapes.easyprog.android.GameViewModel
 import ru.lemonapes.easyprog.android.R
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
+import ru.lemonapes.easyprog.android.commands.GotoCommand
 import ru.lemonapes.easyprog.android.commands.IncValueCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 import ru.lemonapes.easyprog.android.commands.SingleVariableCommand
@@ -206,5 +207,52 @@ fun SingleVariableCommand.CommandRow(
         )
 
         Spacer(modifier = Modifier.weight(0.7f))
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun GotoCommand.CommandRow(
+    index: Int,
+    isExecuting: Boolean,
+    viewModel: GameViewModel,
+) {
+    val backgroundColor = if (isExecuting) AppColors.CommandBackgroundExecuting else AppColors.MAIN_COLOR
+    val text = stringResource(textRes)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = AppDimensions.dp16)
+            .background(
+                color = backgroundColor,
+                shape = AppShapes.CORNER_MEDIUM
+            )
+            .dragAndDropSource { _ ->
+                viewModel.setDraggedCommandItem(viewModel.removeCommand(index))
+                DragAndDropTransferData(
+                    ClipData.newPlainText("dragged_item", text)
+                )
+            }
+            .padding(AppDimensions.dp12),
+    ) {
+        Spacer(modifier = Modifier.weight(1f))
+
+        Box(
+            modifier = Modifier
+                .clip(AppShapes.CORNER_MEDIUM)
+                .background(AppColors.COLOR_ACCENT)
+        ) {
+            Box(Modifier.padding(vertical = AppDimensions.dp4, horizontal = AppDimensions.dp8)) {
+                Image(
+                    modifier = Modifier.size(AppDimensions.iconSize),
+                    painter = painterResource(iconRes),
+                    contentDescription = stringResource(textRes),
+                    colorFilter = ColorFilter.tint(AppColors.MAIN_COLOR),
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
     }
 }

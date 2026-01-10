@@ -11,10 +11,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import android.icu.util.Calendar
 import ru.lemonapes.easyprog.android.commands.CommandItem
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
+import ru.lemonapes.easyprog.android.commands.GotoCommand
 import ru.lemonapes.easyprog.android.commands.IncValueCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
+import ru.lemonapes.easyprog.android.commands.PairCommand
 import ru.lemonapes.easyprog.android.data.GameRepository
 import ru.lemonapes.easyprog.android.levels.LevelConfig
 import ru.lemonapes.easyprog.android.levels.LevelRepository
@@ -71,19 +74,57 @@ class GameViewModel : ViewModel() {
     }
 
     // Управление командами
-    fun addCommand(command: CommandItem) {
-        _viewState.update { it.copy(commandItems = (it.commandItems + command).toImmutableList()) }
+    fun addCommand(command: CommandItem, isNewItem: Boolean) {
+        _viewState.update {
+            fun addCommandRaw() = it.copy(commandItems = (it.commandItems + command).toImmutableList())
+            // Если добавляется goto команда, создаем пару
+            when (command) {
+                is PairCommand -> {
+                    if (isNewItem) {
+                        when (command) {
+                            is GotoCommand -> {
+                                val pairId = Calendar.getInstance().timeInMillis
+                                val startCommand = GotoCommand(type = PairCommand.PairType.FIRST, pairId = pairId)
+                                val targetCommand = GotoCommand(type = PairCommand.PairType.SECOND, pairId = pairId)
+                                val newList = (it.commandItems + startCommand + targetCommand).toImmutableList()
+                                it.copy(
+                                    commandItems = newList,
+                                    scrollToIndex = newList.lastIndex
+                                )
+                            }
+                        }
+                    } else {
+                        addCommandRaw()
+                    }
+                }
+
+                is IncValueCommand, is CopyValueCommand, is MoveValueCommand -> addCommandRaw()
+
+            }
+        }
         saveCommandsToDb()
     }
 
-    fun addCommandAtIndex(index: Int, command: CommandItem) {
+    fun addCommandAtIndex(index: Int, command: CommandItem, isNewItem: Boolean) {
         _viewState.update {
             val newList = it.commandItems.toMutableList()
-            newList.add(index, command)
-            it.copy(
-                commandItems = newList.toImmutableList(),
-                scrollToIndex = index
-            )
+
+            // Если добавляется goto команда, создаем пару
+            if (command is GotoCommand && isNewItem) {
+                val pairId = Calendar.getInstance().timeInMillis
+                newList.add(index, GotoCommand(type = PairCommand.PairType.FIRST, pairId = pairId))
+                newList.add(index + 1, GotoCommand(type = PairCommand.PairType.SECOND, pairId = pairId))
+                it.copy(
+                    commandItems = newList.toImmutableList(),
+                    scrollToIndex = index + 1
+                )
+            } else {
+                newList.add(index, command)
+                it.copy(
+                    commandItems = newList.toImmutableList(),
+                    scrollToIndex = index
+                )
+            }
         }
         saveCommandsToDb()
     }
@@ -97,6 +138,19 @@ class GameViewModel : ViewModel() {
         }
         saveCommandsToDb()
         return removedItem
+    }
+
+    fun removeCommandPair(command: PairCommand) {
+        when (command) {
+            is GotoCommand -> {
+                viewState.value.commandItems.forEachIndexed loop@{ index, found ->
+                    if (found is GotoCommand && command.pairId == found.pairId) {
+                        removeCommand(index)
+                        return@loop
+                    }
+                }
+            }
+        }
     }
 
     fun updateCommand(index: Int, command: CommandItem) {
@@ -190,11 +244,14 @@ class GameViewModel : ViewModel() {
     }
 
     private fun validateCommands(): Boolean {
+        //TODO:перенести в сами классы как функцию
         return _viewState.value.commandItems.all { command ->
             when (command) {
                 is CopyValueCommand -> command.source != null && command.target != null
                 is MoveValueCommand -> command.source != null && command.target != null
                 is IncValueCommand -> command.target != null
+                is GotoCommand -> true // Goto команды не требуют параметров
+                else -> false
             }
         }
     }

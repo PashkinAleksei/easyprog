@@ -166,8 +166,8 @@ private fun GameViewPreview() {
             val viewModel = viewModel<GameViewModel>()
 
             LaunchedEffect(Unit) {
-                viewModel.addCommand(CopyValueCommand())
-                viewModel.addCommand(MoveValueCommand())
+                viewModel.addCommand(CopyValueCommand(), true)
+                viewModel.addCommand(MoveValueCommand(), true)
             }
 
             GameView(

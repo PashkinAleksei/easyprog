@@ -9,8 +9,10 @@ import kotlinx.collections.immutable.toPersistentList
 import kotlinx.collections.immutable.toPersistentSet
 import ru.lemonapes.easyprog.android.CodePeace
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
+import ru.lemonapes.easyprog.android.commands.GotoCommand
 import ru.lemonapes.easyprog.android.commands.IncValueCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
+import ru.lemonapes.easyprog.android.commands.PairCommand
 
 /**
  * Справочник всех уровней игры.
@@ -106,6 +108,7 @@ object LevelRepository {
                 availableCommands = persistentListOf(
                     MoveValueCommand(),
                     CopyValueCommand(),
+                    GotoCommand(type = PairCommand.PairType.FIRST, pairId = 0),
                 ),
                 victoryCondition = VictoryCondition.VariablesSortedAscending(0, 1),
             )
