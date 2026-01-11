@@ -19,6 +19,7 @@ fun GameViewModel.createTopItemDragAndDropTarget(
                 )
             }
             setItemIndexHovered(null)
+            setDraggedCommandItem(null)
             return true
         }
 

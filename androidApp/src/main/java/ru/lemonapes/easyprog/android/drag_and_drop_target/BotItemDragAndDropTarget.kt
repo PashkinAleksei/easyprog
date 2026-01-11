@@ -23,6 +23,7 @@ fun GameViewModel.createBotItemDragAndDropTarget(
                     )
                 }
             setItemIndexHovered(null)
+            setDraggedCommandItem(null)
             return true
         }
 

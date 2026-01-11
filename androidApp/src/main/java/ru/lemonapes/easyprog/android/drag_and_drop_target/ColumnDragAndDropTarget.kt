@@ -15,6 +15,7 @@ fun GameViewModel.createColumnDragAndDropTarget(): DragAndDropTarget {
             }
             setHovered(false)
             setItemIndexHovered(null)
+            setDraggedCommandItem(null)
             return true
         }
 

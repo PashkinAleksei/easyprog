@@ -62,7 +62,6 @@ fun RowScope.CommandsColumn(
         AppDimensions.columnBorderWidth
     }
     val borderColor = if (isColumnVisualHovered) AppColors.ColumnsBorderColorSelected else AppColors.ColumnsBorderColor
-    val boxIcon = if (isColumnVisualHovered) R.drawable.ic_simple_empty_box else R.drawable.ic_simple_empty_box
     val boxIconColor = if (isColumnVisualHovered) {
         AppColors.ColumnsBorderColorSelected
     } else {
@@ -84,7 +83,7 @@ fun RowScope.CommandsColumn(
                 modifier = Modifier
                     .fillMaxSize(0.25f)
                     .align(Alignment.Center),
-                painter = painterResource(boxIcon),
+                painter = painterResource(R.drawable.ic_simple_empty_box),
                 contentDescription = stringResource(R.string.empty_command_icon),
                 colorFilter = ColorFilter.tint(boxIconColor),
             )

@@ -15,18 +15,19 @@ data class CopyValueCommand(
     override val target: Int? = null,
     override val source: Int? = null,
 ) : TwoVariableCommand {
-    override val textRes
-        @StringRes
-        get() = R.string.command_copy_text
-    override val iconRes: Int
-        @DrawableRes
-        get() = R.drawable.ic_copy
-    override val stateId: String
-        get() = toString()
+    @StringRes
+    override val textRes = R.string.command_copy_text
+    @DrawableRes
+    override val iconRes: Int = R.drawable.ic_copy
+    override val stateId = toString()
 
     override fun mkCopy() = copy(id = Calendar.getInstance().timeInMillis)
 
-    override fun invoke(codeItems: ImmutableList<CodePeace>): ImmutableList<CodePeace> {
+    override fun execute(
+        codeItems: ImmutableList<CodePeace>,
+        commandItems: ImmutableList<CommandItem>,
+        currentCommandIndex: Int,
+    ): CommandResult {
         val newCodeItems = codeItems.toMutableList()
 
         val sourceIndex = source!!
@@ -36,6 +37,10 @@ data class CopyValueCommand(
         val targetItem = newCodeItems.removeAt(targetIndex) as CodePeace.IntVariable
 
         newCodeItems.add(targetIndex, targetItem.copy(value = sourceItem.value))
-        return newCodeItems.toImmutableList()
+
+        return CommandResult(
+            newCodeItems = newCodeItems.toImmutableList(),
+            nextCommandIndex = currentCommandIndex + 1,
+        )
     }
 }

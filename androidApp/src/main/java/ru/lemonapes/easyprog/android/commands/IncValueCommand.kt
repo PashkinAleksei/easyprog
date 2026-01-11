@@ -14,18 +14,19 @@ data class IncValueCommand(
     override val id: Long = Calendar.getInstance().timeInMillis,
     override val target: Int? = null,
 ) : SingleVariableCommand {
-    override val textRes
-        @StringRes
-        get() = R.string.command_inc_text
-    override val iconRes: Int
-        @DrawableRes
-        get() = R.drawable.ic_increment
-    override val stateId: String
-        get() = toString()
+    @StringRes
+    override val textRes = R.string.command_inc_text
+    @DrawableRes
+    override val iconRes: Int = R.drawable.ic_increment
+    override val stateId = toString()
 
     override fun mkCopy() = copy(id = Calendar.getInstance().timeInMillis)
 
-    override fun invoke(codeItems: ImmutableList<CodePeace>): ImmutableList<CodePeace> {
+    override fun execute(
+        codeItems: ImmutableList<CodePeace>,
+        commandItems: ImmutableList<CommandItem>,
+        currentCommandIndex: Int,
+    ): CommandResult {
         val newCodeItems = codeItems.toMutableList()
 
         val targetIndex = target!!
@@ -34,6 +35,9 @@ data class IncValueCommand(
         val newValue = (targetItem.value ?: 0) + 1
         newCodeItems.add(targetIndex, targetItem.copy(value = newValue))
 
-        return newCodeItems.toImmutableList()
+        return CommandResult(
+            newCodeItems = newCodeItems.toImmutableList(),
+            nextCommandIndex = currentCommandIndex + 1,
+        )
     }
 }

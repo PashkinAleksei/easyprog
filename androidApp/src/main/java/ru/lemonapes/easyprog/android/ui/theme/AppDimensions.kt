@@ -7,9 +7,12 @@ object AppDimensions {
     val columnBorderWidthSelected = 4.dp
     val dp2 = 2.dp
     val dp4 = 4.dp
+    val dp6 = 6.dp
     val dp8 = 8.dp
-    val dp16 = 16.dp
     val dp12 = 12.dp
+    val dp16 = 16.dp
+    val dp20 = 20.dp
+    val dp28 = 28.dp
     val dp32 = 32.dp
 
     val sourceCodeIconSize = 32.dp

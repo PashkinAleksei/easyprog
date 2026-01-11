@@ -112,7 +112,8 @@ class GameViewModel : ViewModel() {
             // Если добавляется goto команда, создаем пару
             if (command is GotoCommand && isNewItem) {
                 val pairId = Calendar.getInstance().timeInMillis
-                newList.add(index, GotoCommand(type = PairCommand.PairType.FIRST, pairId = pairId))
+                newList.add(index, command.copy(pairId = pairId))
+                //Важно, чтобы ID у пар был разным
                 newList.add(index + 1, GotoCommand(type = PairCommand.PairType.SECOND, pairId = pairId))
                 it.copy(
                     commandItems = newList.toImmutableList(),
@@ -214,18 +215,37 @@ class GameViewModel : ViewModel() {
                 return@launch
             }
 
-            _viewState.value.commandItems.forEachIndexed { index, command ->
+            var currentCommandIndex = 0
+            val maxIterations = _viewState.value.commandItems.size * 100 // Защита от бесконечных циклов
+            var iterationCount = 0
+
+            while (currentCommandIndex < _viewState.value.commandItems.size && iterationCount < maxIterations) {
+                iterationCount++
+
+                val command = _viewState.value.commandItems[currentCommandIndex]
+
                 // Команда становится выделенной (выполняется)
-                setExecutingCommandIndex(index)
+                setExecutingCommandIndex(currentCommandIndex)
                 delay(500)
 
                 // Команда выполняется и обновляет состояние
-                val newCodeItems = command(_viewState.value.codeItems)
-                _viewState.update { it.copy(codeItems = newCodeItems) }
+                val commandResult =
+                    command.execute(
+                        codeItems = _viewState.value.codeItems,
+                        commandItems = _viewState.value.commandItems,
+                        currentCommandIndex = currentCommandIndex
+                    )
+                _viewState.update { it.copy(codeItems = commandResult.newCodeItems) }
                 delay(500)
 
                 // Команда завершена
                 setExecutingCommandIndex(null)
+
+                //Если команда последняя, завершаем цикл
+                if (_viewState.value.commandItems.size <= commandResult.nextCommandIndex) break
+
+                // Определяем следующий индекс команды
+                currentCommandIndex = commandResult.nextCommandIndex
             }
 
             // Проверка условия победы

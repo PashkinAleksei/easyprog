@@ -7,9 +7,11 @@
     <string name="command_inc_text">Увеличить</string>
     <string name="command_goto_start">Метка</string>
     <string name="command_goto_target">Переход</string>
-    <string name="arrow_to_description">to</string>
+    <string name="from_portal">Из портала</string>
+    <string name="to_portal">В портал</string>
+    <string name="to">в</string>
     <string name="unknown_variable">?</string>
-    <string name="variable_box_description">Box</string>
+    <string name="variable_box_description">Ящик</string>
     <string name="victory_title">Поздравляем!</string>
     <string name="victory_message">Вы победили!</string>
     <string name="try_again_title">Попробуйте еще</string>

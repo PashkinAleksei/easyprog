@@ -12,5 +12,14 @@ sealed interface CommandItem {
 
     val stateId: String
     fun mkCopy(): CommandItem
-    operator fun invoke(codeItems: ImmutableList<CodePeace>): ImmutableList<CodePeace>
+    fun execute(
+        codeItems: ImmutableList<CodePeace>,
+        commandItems: ImmutableList<CommandItem>,
+        currentCommandIndex: Int,
+    ): CommandResult
 }
+
+data class CommandResult(
+    val newCodeItems: ImmutableList<CodePeace>,
+    val nextCommandIndex: Int,
+)
