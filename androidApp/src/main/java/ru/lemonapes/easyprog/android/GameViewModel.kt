@@ -74,7 +74,7 @@ class GameViewModel : ViewModel() {
     }
 
     // Управление командами
-    fun addCommand(command: CommandItem, isNewItem: Boolean) {
+    fun addCommand(command: CommandItem, isNewItem: Boolean): Boolean {
         _viewState.update {
             fun addCommandRaw() = it.copy(commandItems = (it.commandItems + command).toImmutableList())
             // Если добавляется goto команда, создаем пару
@@ -83,9 +83,24 @@ class GameViewModel : ViewModel() {
                     if (isNewItem) {
                         when (command) {
                             is GotoCommand -> {
+                                // Проверяем количество существующих GoTo команд
+                                val currentGotoCount = countGotoCommands(it.commandItems)
+                                if (currentGotoCount >= Config.MAX_GOTO_COMMANDS) {
+                                    // Если лимит достигнут, не добавляем новую команду
+                                    return false
+                                }
+
                                 val pairId = Calendar.getInstance().timeInMillis
-                                val startCommand = GotoCommand(type = PairCommand.PairType.FIRST, pairId = pairId)
-                                val targetCommand = GotoCommand(type = PairCommand.PairType.SECOND, pairId = pairId)
+                                val colorIndex = findFirstAvailableColorIndex(it.commandItems)
+                                val startCommand = command.copy(
+                                    pairId = pairId,
+                                    colorIndex = colorIndex
+                                )
+                                val targetCommand = GotoCommand(
+                                    type = PairCommand.PairType.SECOND,
+                                    pairId = pairId,
+                                    colorIndex = colorIndex
+                                )
                                 val newList = (it.commandItems + startCommand + targetCommand).toImmutableList()
                                 it.copy(
                                     commandItems = newList,
@@ -103,18 +118,34 @@ class GameViewModel : ViewModel() {
             }
         }
         saveCommandsToDb()
+        return true
     }
 
-    fun addCommandAtIndex(index: Int, command: CommandItem, isNewItem: Boolean) {
+    fun addCommandAtIndex(index: Int, command: CommandItem, isNewItem: Boolean): Boolean {
         _viewState.update {
             val newList = it.commandItems.toMutableList()
 
             // Если добавляется goto команда, создаем пару
             if (command is GotoCommand && isNewItem) {
+                // Проверяем количество существующих GoTo команд
+                val currentGotoCount = countGotoCommands(it.commandItems)
+                if (currentGotoCount >= Config.MAX_GOTO_COMMANDS) {
+                    // Если лимит достигнут, не добавляем новую команду
+                    return false
+                }
+
                 val pairId = Calendar.getInstance().timeInMillis
-                newList.add(index, command.copy(pairId = pairId))
+                val colorIndex = findFirstAvailableColorIndex(it.commandItems)
+                newList.add(index, command.copy(pairId = pairId, colorIndex = colorIndex))
                 //Важно, чтобы ID у пар был разным
-                newList.add(index + 1, GotoCommand(type = PairCommand.PairType.SECOND, pairId = pairId))
+                newList.add(
+                    index + 1,
+                    GotoCommand(
+                        type = PairCommand.PairType.SECOND,
+                        pairId = pairId,
+                        colorIndex = colorIndex
+                    )
+                )
                 it.copy(
                     commandItems = newList.toImmutableList(),
                     scrollToIndex = index + 1
@@ -128,6 +159,7 @@ class GameViewModel : ViewModel() {
             }
         }
         saveCommandsToDb()
+        return true
     }
 
     fun removeCommand(index: Int): CommandItem? {
@@ -307,4 +339,41 @@ class GameViewModel : ViewModel() {
     fun getCurrentLevelId(): Int = _viewState.value.levelId
 
     fun hasNextLevel(): Boolean = LevelRepository.hasNextLevel(_viewState.value.levelId)
+
+    /**
+     * Подсчитывает количество уникальных GoTo команд (пар) в списке команд.
+     * Каждая пара GoTo команд считается как одна команда.
+     */
+    private fun countGotoCommands(commands: ImmutableList<CommandItem>): Int {
+        val uniquePairIds = mutableSetOf<Long>()
+        commands.forEach { command ->
+            if (command is GotoCommand) {
+                uniquePairIds.add(command.pairId)
+            }
+        }
+        return uniquePairIds.size
+    }
+
+    /**
+     * Находит первый незанятый индекс цвета для новой GoTo команды.
+     * Возвращает минимальный индекс от 0 до MAX_GOTO_COMMANDS-1, который еще не используется.
+     */
+    private fun findFirstAvailableColorIndex(commands: ImmutableList<CommandItem>): Int {
+        val usedColorIndices = mutableSetOf<Int>()
+        commands.forEach { command ->
+            if (command is GotoCommand) {
+                usedColorIndices.add(command.colorIndex)
+            }
+        }
+
+        // Находим первый незанятый индекс
+        for (i in 0 until Config.MAX_GOTO_COMMANDS) {
+            if (i !in usedColorIndices) {
+                return i
+            }
+        }
+
+        // Если все индексы заняты (не должно произойти из-за проверки лимита)
+        return 0
+    }
 }

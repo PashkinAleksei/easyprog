@@ -49,11 +49,13 @@ class GameRepository(
                     id = Calendar.getInstance().timeInMillis + entity.orderIndex,
                     type = PairCommand.PairType.FIRST,
                     pairId = entity.sourceIndex?.toLong() ?: 0L,
+                    colorIndex = entity.colorIndex,
                 )
                 COMMAND_TYPE_GOTO_TARGET -> GotoCommand(
                     id = Calendar.getInstance().timeInMillis + entity.orderIndex,
                     type = PairCommand.PairType.SECOND,
                     pairId = entity.sourceIndex?.toLong() ?: 0L,
+                    colorIndex = entity.colorIndex,
                 )
                 else -> throw IllegalArgumentException("Unknown command type: ${entity.commandType}")
             }
@@ -85,6 +87,10 @@ class GameRepository(
                     is MoveValueCommand -> command.target
                     is IncValueCommand -> command.target
                     is GotoCommand -> null
+                },
+                colorIndex = when (command) {
+                    is GotoCommand -> command.colorIndex
+                    else -> 0
                 },
             )
         }

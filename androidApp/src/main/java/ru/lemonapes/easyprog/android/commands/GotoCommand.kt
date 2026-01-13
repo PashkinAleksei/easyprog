@@ -13,6 +13,7 @@ data class GotoCommand(
     override val id: Long = Calendar.getInstance().timeInMillis,
     val type: PairCommand.PairType,
     override val pairId: Long,
+    val colorIndex: Int,
 ) : PairCommand {
     @StringRes
     override val textRes: Int = when (type) {

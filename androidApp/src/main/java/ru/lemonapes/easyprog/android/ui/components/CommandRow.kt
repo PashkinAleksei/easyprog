@@ -244,7 +244,7 @@ fun GotoCommand.CommandRow(
             modifier = Modifier
                 .size(AppDimensions.commandVariableBoxSize)
                 .clip(AppShapes.CORNER_SMALL)
-                .background(AppColors.LabelColors.first())
+                .background(AppColors.LabelColors[colorIndex])
         )
         if (type == PairCommand.PairType.FIRST) {
             Image(

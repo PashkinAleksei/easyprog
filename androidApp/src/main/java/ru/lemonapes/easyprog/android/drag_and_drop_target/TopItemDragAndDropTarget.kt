@@ -11,16 +11,16 @@ fun GameViewModel.createTopItemDragAndDropTarget(
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
             val isNewItem = event.label == "new_item"
-            event.toCommandItem(draggedCommandItem.value)?.let { command ->
+            val commandResult = event.toCommandItem(draggedCommandItem.value)?.let { command ->
                 addCommandAtIndex(
                     index = index,
                     command = command,
                     isNewItem = isNewItem
                 )
-            }
+            } ?: false
             setItemIndexHovered(null)
             setDraggedCommandItem(null)
-            return true
+            return commandResult
         }
 
         override fun onEntered(event: DragAndDropEvent) {

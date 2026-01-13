@@ -12,4 +12,5 @@ data class SavedCommandEntity(
     val commandType: String,
     val sourceIndex: Int?,
     val targetIndex: Int?,
+    val colorIndex: Int = 0,
 )

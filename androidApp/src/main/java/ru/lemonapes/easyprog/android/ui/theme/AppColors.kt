@@ -36,19 +36,19 @@ object AppColors {
     )
 
     val LabelColors = listOf(
-        Color(0xFFFF0000),
-        Color(0xFF00FF00),
-        Color(0xFF0000FF),
+        Color(0xFFFF5454),
+        Color(0xFFBAFFBA),
+        Color(0xFF0000A8),
 
-        Color(0xFFFF00FF),
-        Color(0xFFFFFF00),
+        Color(0xFFFFB8FF),
+        Color(0xFFFFFF9A),
         Color(0xFF00FFFF),
 
         Color(0xFFFFAA00),
-        Color(0xFFAAFF00),
-        Color(0xFF00AAFF),
+        Color(0xFF78F8CF),
+        Color(0xFF00A7FF),
 
-        Color(0xFFFFAAAA),
+        Color(0xFFFCAAFF),
         Color.Transparent,
     )
 }

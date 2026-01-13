@@ -30,6 +30,7 @@ object LevelRepository {
                 ),
                 availableCommands = persistentListOf(
                     CopyValueCommand(),
+                    GotoCommand(type = PairCommand.PairType.FIRST, pairId = 0, colorIndex = 0),
                 ),
                 victoryCondition = VictoryCondition.VariableEquals(index = 1, expectedValue = 5),
             )
@@ -108,7 +109,6 @@ object LevelRepository {
                 availableCommands = persistentListOf(
                     MoveValueCommand(),
                     CopyValueCommand(),
-                    GotoCommand(type = PairCommand.PairType.FIRST, pairId = 0),
                 ),
                 victoryCondition = VictoryCondition.VariablesSortedAscending(0, 1),
             )
