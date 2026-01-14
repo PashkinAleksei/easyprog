@@ -124,18 +124,34 @@ fun GameView(
                 )
             }
 
-            IconButton(
-                onClick = { viewModel.executeCommands() },
-                modifier = Modifier
-                    .padding(end = AppDimensions.dp16)
-                    .size(AppDimensions.mainIconButtonSize)
-            ) {
-                Icon(
-                    modifier = Modifier.size(AppDimensions.playIconSize),
-                    painter = painterResource(R.drawable.ic_play_triangle),
-                    contentDescription = stringResource(R.string.start_button_description),
-                    tint = AppColors.PlayButtonColor
-                )
+            if (viewState.isCommandExecution) {
+                IconButton(
+                    onClick = { viewModel.stopExecution() },
+                    modifier = Modifier
+                        .padding(end = AppDimensions.dp16)
+                        .size(AppDimensions.mainIconButtonSize)
+                ) {
+                    Icon(
+                        modifier = Modifier.size(AppDimensions.stopIconSize),
+                        painter = painterResource(R.drawable.ic_stop),
+                        contentDescription = stringResource(R.string.stop_button_description),
+                        tint = AppColors.StopButtonColor
+                    )
+                }
+            } else {
+                IconButton(
+                    onClick = { viewModel.executeCommands() },
+                    modifier = Modifier
+                        .padding(end = AppDimensions.dp16)
+                        .size(AppDimensions.mainIconButtonSize)
+                ) {
+                    Icon(
+                        modifier = Modifier.size(AppDimensions.playIconSize),
+                        painter = painterResource(R.drawable.ic_play_triangle),
+                        contentDescription = stringResource(R.string.start_button_description),
+                        tint = AppColors.PlayButtonColor
+                    )
+                }
             }
         }
 

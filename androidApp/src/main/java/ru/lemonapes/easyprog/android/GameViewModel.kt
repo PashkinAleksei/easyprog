@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +32,8 @@ class GameViewModel : ViewModel() {
 
     private val _viewState = MutableStateFlow(GameViewState())
     val viewState: StateFlow<GameViewState> = _viewState.asStateFlow()
+
+    private var executionJob: Job? = null
 
     fun loadLevel(levelId: Int) {
         currentLevelConfig = LevelRepository.getLevel(levelId)
@@ -257,7 +260,7 @@ class GameViewModel : ViewModel() {
     }
 
     fun executeCommands() {
-        viewModelScope.launch {
+        executionJob = viewModelScope.launch {
             if (!validateCommands()) {
                 return@launch
             }
@@ -302,7 +305,16 @@ class GameViewModel : ViewModel() {
             } else {
                 showTryAgainDialog()
             }
+
+            executionJob = null
         }
+    }
+
+    fun stopExecution() {
+        executionJob?.cancel()
+        executionJob = null
+        setExecutingCommandIndex(null)
+        resetCodeItems()
     }
 
     private fun checkVictory(): Boolean {

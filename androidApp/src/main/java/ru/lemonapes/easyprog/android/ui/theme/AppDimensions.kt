@@ -23,6 +23,7 @@ object AppDimensions {
     val iconSize = 24.dp
     val mainIconButtonSize = 60.dp
     val playIconSize = 60.dp
+    val stopIconSize = 50.dp
     val menuIconSize = 50.dp
     val clearCommandsIconSize = 40.dp
     val questionIconSize = 40.dp
