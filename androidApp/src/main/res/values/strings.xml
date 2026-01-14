@@ -29,4 +29,5 @@
     <string name="no">Нет</string>
     <string name="clear_commands">Очистить команды</string>
     <string name="stop_button_description">Остановить выполнение</string>
+    <string name="execution_speed">Скорость выполнения</string>
 </resources>

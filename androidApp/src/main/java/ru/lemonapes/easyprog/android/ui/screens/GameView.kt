@@ -108,20 +108,34 @@ fun GameView(
                 )
             }
 
-            IconButton(
-                onClick = { viewModel.showClearCommandsDialog() },
-                modifier = Modifier.size(AppDimensions.mainIconButtonSize),
-                enabled = viewState.commandItems.isNotEmpty()
-            ) {
-                Icon(
-                    modifier = Modifier.size(AppDimensions.clearCommandsIconSize),
-                    painter = painterResource(R.drawable.ic_delete),
-                    contentDescription = stringResource(R.string.clear_commands),
-                    tint = if (viewState.commandItems.isNotEmpty())
-                        AppColors.COLOR_ACCENT
-                    else
-                        AppColors.COLOR_ACCENT.copy(alpha = 0.3f)
-                )
+            if (viewState.isCommandExecution) {
+                IconButton(
+                    onClick = { viewModel.cycleExecutionSpeed() },
+                    modifier = Modifier.size(AppDimensions.mainIconButtonSize)
+                ) {
+                    Icon(
+                        modifier = Modifier.size(AppDimensions.clearCommandsIconSize),
+                        painter = painterResource(viewState.executionSpeed.iconRes),
+                        contentDescription = stringResource(R.string.execution_speed),
+                        tint = AppColors.COLOR_ACCENT
+                    )
+                }
+            } else {
+                IconButton(
+                    onClick = { viewModel.showClearCommandsDialog() },
+                    modifier = Modifier.size(AppDimensions.mainIconButtonSize),
+                    enabled = viewState.commandItems.isNotEmpty()
+                ) {
+                    Icon(
+                        modifier = Modifier.size(AppDimensions.clearCommandsIconSize),
+                        painter = painterResource(R.drawable.ic_delete),
+                        contentDescription = stringResource(R.string.clear_commands),
+                        tint = if (viewState.commandItems.isNotEmpty())
+                            AppColors.COLOR_ACCENT
+                        else
+                            AppColors.COLOR_ACCENT.copy(alpha = 0.3f)
+                    )
+                }
             }
 
             if (viewState.isCommandExecution) {

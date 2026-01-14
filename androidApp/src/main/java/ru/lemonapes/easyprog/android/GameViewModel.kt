@@ -259,6 +259,10 @@ class GameViewModel : ViewModel() {
         _viewState.update { it.copy(scrollToIndex = null) }
     }
 
+    fun cycleExecutionSpeed() {
+        _viewState.update { it.copy(executionSpeed = it.executionSpeed.next()) }
+    }
+
     fun executeCommands() {
         executionJob = viewModelScope.launch {
             if (!validateCommands()) {
@@ -273,10 +277,11 @@ class GameViewModel : ViewModel() {
                 iterationCount++
 
                 val command = _viewState.value.commandItems[currentCommandIndex]
+                val delayMs = _viewState.value.executionSpeed.delayMs
 
                 // Команда становится выделенной (выполняется)
                 setExecutingCommandIndex(currentCommandIndex)
-                delay(500)
+                delay(delayMs)
 
                 // Команда выполняется и обновляет состояние
                 val commandResult =
@@ -286,7 +291,7 @@ class GameViewModel : ViewModel() {
                         currentCommandIndex = currentCommandIndex
                     )
                 _viewState.update { it.copy(codeItems = commandResult.newCodeItems) }
-                delay(500)
+                delay(delayMs)
 
                 // Команда завершена
                 setExecutingCommandIndex(null)
