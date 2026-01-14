@@ -33,7 +33,11 @@ import ru.lemonapes.easyprog.android.ui.theme.AppShapes
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun RowScope.SourceColumn(viewModel: GameViewModel, sourceItems: ImmutableList<CommandItem>) {
+fun RowScope.SourceColumn(
+    viewModel: GameViewModel,
+    sourceItems: ImmutableList<CommandItem>,
+    isAnyCommandExecuting: Boolean,
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = Modifier
@@ -54,17 +58,23 @@ fun RowScope.SourceColumn(viewModel: GameViewModel, sourceItems: ImmutableList<C
 
             Box(
                 modifier = Modifier
-                    .dragAndDropSource { ->
-                        detectTapGestures(
-                            onPress = { offset ->
-                                viewModel.setDraggedCommandItem(item.mkCopy())
-                                startTransfer(
-                                    transferData = DragAndDropTransferData(
-                                        clipData = ClipData.newPlainText("new_item", text)
-                                    )
-                                )
-                            })
-                    }
+                    .then(
+                        if (!isAnyCommandExecuting) {
+                            Modifier.dragAndDropSource { ->
+                                detectTapGestures(
+                                    onPress = { offset ->
+                                        viewModel.setDraggedCommandItem(item.mkCopy())
+                                        startTransfer(
+                                            transferData = DragAndDropTransferData(
+                                                clipData = ClipData.newPlainText("new_item", text)
+                                            )
+                                        )
+                                    })
+                            }
+                        } else {
+                            Modifier
+                        }
+                    )
                     .background(
                         color = AppColors.MAIN_COLOR,
                         shape = AppShapes.CORNER_MEDIUM

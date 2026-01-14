@@ -54,6 +54,7 @@ fun RowScope.CommandsColumn(
     viewModel: GameViewModel,
 ) {
     val isColumnVisualHovered = viewState.isHovered
+    val isCommandExecution = viewState.isCommandExecution
 
     val columnDragAndDropTarget = remember(viewModel) { viewModel.createColumnDragAndDropTarget() }
     val borderWidth = if (isColumnVisualHovered) {
@@ -123,6 +124,7 @@ fun RowScope.CommandsColumn(
                                     index = index,
                                     codeItems = viewState.codeItems,
                                     isExecuting = viewState.executingCommandIndex == index,
+                                    isAnyCommandExecuting = isCommandExecution,
                                     viewModel = viewModel
                                 )
 
@@ -130,6 +132,7 @@ fun RowScope.CommandsColumn(
                                     index = index,
                                     codeItems = viewState.codeItems,
                                     isExecuting = viewState.executingCommandIndex == index,
+                                    isAnyCommandExecuting = isCommandExecution,
                                     viewModel = viewModel
                                 )
 
@@ -137,12 +140,14 @@ fun RowScope.CommandsColumn(
                                     index = index,
                                     codeItems = viewState.codeItems,
                                     isExecuting = viewState.executingCommandIndex == index,
+                                    isAnyCommandExecuting = isCommandExecution,
                                     viewModel = viewModel
                                 )
 
                                 is GotoCommand -> item.CommandRow(
                                     index = index,
                                     isExecuting = viewState.executingCommandIndex == index,
+                                    isCommandExecution = isCommandExecution,
                                     viewModel = viewModel
                                 )
                             }

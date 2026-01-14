@@ -50,6 +50,7 @@ fun TwoVariableCommand.CommandRow(
     index: Int,
     codeItems: ImmutableList<CodePeace>,
     isExecuting: Boolean,
+    isAnyCommandExecuting: Boolean,
     viewModel: GameViewModel,
 ) {
     val variables = remember(codeItems) {
@@ -66,12 +67,18 @@ fun TwoVariableCommand.CommandRow(
                 color = backgroundColor,
                 shape = AppShapes.CORNER_MEDIUM
             )
-            .dragAndDropSource { _ ->
-                viewModel.setDraggedCommandItem(viewModel.removeCommand(index))
-                DragAndDropTransferData(
-                    ClipData.newPlainText("dragged_item", text)
-                )
-            }
+            .then(
+                if (!isAnyCommandExecuting) {
+                    Modifier.dragAndDropSource { _ ->
+                        viewModel.setDraggedCommandItem(viewModel.removeCommand(index))
+                        DragAndDropTransferData(
+                            ClipData.newPlainText("dragged_item", text)
+                        )
+                    }
+                } else {
+                    Modifier
+                }
+            )
             .padding(dp12),
     ) {
         Spacer(modifier = Modifier.width(dp16))
@@ -154,6 +161,7 @@ fun SingleVariableCommand.CommandRow(
     index: Int,
     codeItems: ImmutableList<CodePeace>,
     isExecuting: Boolean,
+    isAnyCommandExecuting: Boolean,
     viewModel: GameViewModel,
 ) {
     val variables = remember(codeItems) {
@@ -170,12 +178,18 @@ fun SingleVariableCommand.CommandRow(
                 color = backgroundColor,
                 shape = AppShapes.CORNER_MEDIUM
             )
-            .dragAndDropSource { _ ->
-                viewModel.setDraggedCommandItem(viewModel.removeCommand(index))
-                DragAndDropTransferData(
-                    ClipData.newPlainText("dragged_item", text)
-                )
-            }
+            .then(
+                if (!isAnyCommandExecuting) {
+                    Modifier.dragAndDropSource { _ ->
+                        viewModel.setDraggedCommandItem(viewModel.removeCommand(index))
+                        DragAndDropTransferData(
+                            ClipData.newPlainText("dragged_item", text)
+                        )
+                    }
+                } else {
+                    Modifier
+                }
+            )
             .padding(dp12),
     ) {
         Spacer(modifier = Modifier.width(dp16))
@@ -218,6 +232,7 @@ fun SingleVariableCommand.CommandRow(
 fun GotoCommand.CommandRow(
     index: Int,
     isExecuting: Boolean,
+    isCommandExecution: Boolean,
     viewModel: GameViewModel,
 ) {
     val backgroundColor = if (isExecuting) AppColors.CommandBackgroundExecuting else AppColors.MAIN_COLOR
@@ -231,12 +246,18 @@ fun GotoCommand.CommandRow(
                 color = backgroundColor,
                 shape = AppShapes.CORNER_MEDIUM
             )
-            .dragAndDropSource { _ ->
-                viewModel.setDraggedCommandItem(viewModel.removeCommand(index))
-                DragAndDropTransferData(
-                    ClipData.newPlainText("dragged_item", text)
-                )
-            }
+            .then(
+                if (!isCommandExecution) {
+                    Modifier.dragAndDropSource { _ ->
+                        viewModel.setDraggedCommandItem(viewModel.removeCommand(index))
+                        DragAndDropTransferData(
+                            ClipData.newPlainText("dragged_item", text)
+                        )
+                    }
+                } else {
+                    Modifier
+                }
+            )
             .padding(dp12),
     ) {
         Spacer(modifier = Modifier.width(dp16))

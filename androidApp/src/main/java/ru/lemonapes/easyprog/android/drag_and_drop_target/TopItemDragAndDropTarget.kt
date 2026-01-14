@@ -10,17 +10,20 @@ fun GameViewModel.createTopItemDragAndDropTarget(
 ): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            val isNewItem = event.label == "new_item"
-            val commandResult = event.toCommandItem(draggedCommandItem.value)?.let { command ->
-                addCommandAtIndex(
-                    index = index,
-                    command = command,
-                    isNewItem = isNewItem
-                )
-            } ?: false
+            // Игнорировать drop во время выполнения команд
+            val addingResult = if (!viewState.value.isCommandExecution) {
+                val isNewItem = event.label == "new_item"
+                event.toCommandItem(draggedCommandItem.value)?.let { command ->
+                    addCommandAtIndex(
+                        index = index,
+                        command = command,
+                        isNewItem = isNewItem
+                    )
+                } ?: false
+            } else false
             setItemIndexHovered(null)
             setDraggedCommandItem(null)
-            return commandResult
+            return addingResult
         }
 
         override fun onEntered(event: DragAndDropEvent) {

@@ -22,7 +22,7 @@ data class GotoCommand(
     }
 
     @DrawableRes
-    override val iconRes: Int = R.drawable.ic_portal
+    override val iconRes: Int = R.drawable.ic_step_over
     override val stateId = toString()
 
     override fun mkCopy() = copy(id = Calendar.getInstance().timeInMillis)

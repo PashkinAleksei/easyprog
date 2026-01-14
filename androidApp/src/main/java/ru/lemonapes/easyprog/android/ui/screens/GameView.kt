@@ -146,7 +146,7 @@ fun GameView(
         ) {
             CodeColumn(viewState.codeItems)
             CommandsColumn(viewState, viewModel)
-            SourceColumn(viewModel, viewState.sourceItems)
+            SourceColumn(viewModel, viewState.sourceItems, viewState.isCommandExecution)
         }
     }
 

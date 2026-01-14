@@ -19,4 +19,7 @@ data class GameViewState(
     val isHovered: Boolean = false,
     val itemIndexHovered: Int? = null,
     val scrollToIndex: Int? = null,
-)
+) {
+    val isCommandExecution: Boolean
+        get() = executingCommandIndex != null
+}

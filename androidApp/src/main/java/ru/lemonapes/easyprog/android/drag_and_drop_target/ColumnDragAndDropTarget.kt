@@ -9,14 +9,17 @@ import ru.lemonapes.easyprog.android.toCommandItem
 fun GameViewModel.createColumnDragAndDropTarget(): DragAndDropTarget {
     return object : DragAndDropTarget {
         override fun onDrop(event: DragAndDropEvent): Boolean {
-            val isNewItem = event.label == "new_item"
-            val commandResult = event.toCommandItem(draggedCommandItem.value)?.let { command ->
-                addCommand(command, isNewItem)
-            } ?: false
+            // Игнорировать drop во время выполнения команд
+            val addingResult = if (!viewState.value.isCommandExecution) {
+                val isNewItem = event.label == "new_item"
+                event.toCommandItem(draggedCommandItem.value)?.let { command ->
+                    addCommand(command, isNewItem)
+                } ?: false
+            } else false
             setHovered(false)
             setItemIndexHovered(null)
             setDraggedCommandItem(null)
-            return commandResult
+            return addingResult
         }
 
         override fun onEntered(event: DragAndDropEvent) {
