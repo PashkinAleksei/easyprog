@@ -23,4 +23,9 @@
     <string name="menu">Меню</string>
     <string name="next_level">Следующий уровень</string>
     <string name="level_prefix">Ур.</string>
+    <string name="clear_commands_title">Очистить поле команд?</string>
+    <string name="clear_commands_message">Все добавленные команды будут удалены</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+    <string name="clear_commands">Очистить команды</string>
 </resources>

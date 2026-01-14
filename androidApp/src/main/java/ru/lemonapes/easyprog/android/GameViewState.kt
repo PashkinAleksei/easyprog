@@ -12,6 +12,7 @@ data class GameViewState(
     val showVictoryDialog: Boolean = false,
     val showTryAgainDialog: Boolean = false,
     val showLevelInfoDialog: Boolean = false,
+    val showClearCommandsDialog: Boolean = false,
     val levelTitle: String = "",
     val levelDescription: String = "",
     val executingCommandIndex: Int? = null,

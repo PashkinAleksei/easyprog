@@ -201,6 +201,13 @@ class GameViewModel : ViewModel() {
         }
     }
 
+    fun clearCommands() {
+        _viewState.update {
+            it.copy(commandItems = persistentListOf())
+        }
+        saveCommandsToDb()
+    }
+
     fun showVictoryDialog() {
         _viewState.update { it.copy(showVictoryDialog = true) }
     }
@@ -223,6 +230,14 @@ class GameViewModel : ViewModel() {
 
     fun hideLevelInfoDialog() {
         _viewState.update { it.copy(showLevelInfoDialog = false) }
+    }
+
+    fun showClearCommandsDialog() {
+        _viewState.update { it.copy(showClearCommandsDialog = true) }
+    }
+
+    fun hideClearCommandsDialog() {
+        _viewState.update { it.copy(showClearCommandsDialog = false) }
     }
 
     fun setHovered(isHovered: Boolean) {

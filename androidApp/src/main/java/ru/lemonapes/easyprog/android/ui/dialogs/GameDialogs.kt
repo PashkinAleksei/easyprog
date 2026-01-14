@@ -102,6 +102,30 @@ fun LevelInfoDialog(
 }
 
 @Composable
+fun ClearCommandsDialog(
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    GameDialog(
+        title = stringResource(R.string.clear_commands_title),
+        message = stringResource(R.string.clear_commands_message),
+        dismissable = true,
+        onDismissRequest = onCancel,
+    ) {
+        DialogActionButton(
+            iconRes = R.drawable.ic_check,
+            contentDescription = stringResource(R.string.yes),
+            onClick = onConfirm
+        )
+        DialogActionButton(
+            iconRes = R.drawable.ic_close,
+            contentDescription = stringResource(R.string.no),
+            onClick = onCancel
+        )
+    }
+}
+
+@Composable
 private fun GameDialog(
     title: String,
     message: String,

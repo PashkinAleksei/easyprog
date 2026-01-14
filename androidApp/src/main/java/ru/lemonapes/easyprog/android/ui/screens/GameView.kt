@@ -35,6 +35,7 @@ import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 import ru.lemonapes.easyprog.android.ui.columns.CodeColumn
 import ru.lemonapes.easyprog.android.ui.columns.CommandsColumn
 import ru.lemonapes.easyprog.android.ui.columns.SourceColumn
+import ru.lemonapes.easyprog.android.ui.dialogs.ClearCommandsDialog
 import ru.lemonapes.easyprog.android.ui.dialogs.LevelInfoDialog
 import ru.lemonapes.easyprog.android.ui.dialogs.TryAgainDialog
 import ru.lemonapes.easyprog.android.ui.dialogs.VictoryDialog
@@ -108,6 +109,22 @@ fun GameView(
             }
 
             IconButton(
+                onClick = { viewModel.showClearCommandsDialog() },
+                modifier = Modifier.size(AppDimensions.mainIconButtonSize),
+                enabled = viewState.commandItems.isNotEmpty()
+            ) {
+                Icon(
+                    modifier = Modifier.size(AppDimensions.clearCommandsIconSize),
+                    painter = painterResource(R.drawable.ic_delete),
+                    contentDescription = stringResource(R.string.clear_commands),
+                    tint = if (viewState.commandItems.isNotEmpty())
+                        AppColors.COLOR_ACCENT
+                    else
+                        AppColors.COLOR_ACCENT.copy(alpha = 0.3f)
+                )
+            }
+
+            IconButton(
                 onClick = { viewModel.executeCommands() },
                 modifier = Modifier
                     .padding(end = AppDimensions.dp16)
@@ -154,6 +171,16 @@ fun GameView(
         TryAgainDialog(
             onReplay = viewModel::onTryAgainReplay,
             onMenu = { viewModel.onTryAgainMenu(onBackToMenu) }
+        )
+    }
+
+    if (viewState.showClearCommandsDialog) {
+        ClearCommandsDialog(
+            onConfirm = {
+                viewModel.clearCommands()
+                viewModel.hideClearCommandsDialog()
+            },
+            onCancel = { viewModel.hideClearCommandsDialog() }
         )
     }
 }
