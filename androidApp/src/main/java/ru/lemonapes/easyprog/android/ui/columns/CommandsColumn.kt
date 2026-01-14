@@ -37,13 +37,15 @@ import ru.lemonapes.easyprog.android.MyApplicationTheme
 import ru.lemonapes.easyprog.android.R
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
 import ru.lemonapes.easyprog.android.commands.GotoCommand
-import ru.lemonapes.easyprog.android.commands.IncValueCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
+import ru.lemonapes.easyprog.android.commands.SingleVariableCommand
+import ru.lemonapes.easyprog.android.commands.TwoVariableCommand
 import ru.lemonapes.easyprog.android.drag_and_drop_target.createBotItemDragAndDropTarget
 import ru.lemonapes.easyprog.android.drag_and_drop_target.createColumnDragAndDropTarget
 import ru.lemonapes.easyprog.android.drag_and_drop_target.createTopItemDragAndDropTarget
 import ru.lemonapes.easyprog.android.extensions.dragAndDropTextTarget
 import ru.lemonapes.easyprog.android.ui.components.CommandRow
+import ru.lemonapes.easyprog.android.ui.components.commandRowModifier
 import ru.lemonapes.easyprog.android.ui.theme.AppColors
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions
 import ru.lemonapes.easyprog.android.ui.theme.AppShapes
@@ -119,37 +121,38 @@ fun RowScope.CommandsColumn(
                             } else {
                                 Spacer(modifier = Modifier.height(AppDimensions.dp8))
                             }
+
+                            val commandText = stringResource(item.textRes)
+                            val commandRowModifier = Modifier.commandRowModifier(
+                                index = index,
+                                isThisCommandExecuting = viewState.executingCommandIndex == index,
+                                isCommandExecution = isCommandExecution,
+                                text = commandText,
+                                viewModel = viewModel
+                            )
+
                             when (item) {
-                                is CopyValueCommand -> item.CommandRow(
-                                    index = index,
-                                    codeItems = viewState.codeItems,
-                                    isExecuting = viewState.executingCommandIndex == index,
-                                    isAnyCommandExecuting = isCommandExecution,
-                                    viewModel = viewModel
-                                )
+                                is TwoVariableCommand -> {
+                                    item.CommandRow(
+                                        modifier = commandRowModifier,
+                                        index = index,
+                                        codeItems = viewState.codeItems,
+                                        viewModel = viewModel,
+                                    )
+                                }
 
-                                is MoveValueCommand -> item.CommandRow(
-                                    index = index,
-                                    codeItems = viewState.codeItems,
-                                    isExecuting = viewState.executingCommandIndex == index,
-                                    isAnyCommandExecuting = isCommandExecution,
-                                    viewModel = viewModel
-                                )
+                                is SingleVariableCommand -> {
+                                    item.CommandRow(
+                                        modifier = commandRowModifier,
+                                        index = index,
+                                        codeItems = viewState.codeItems,
+                                        viewModel = viewModel,
+                                    )
+                                }
 
-                                is IncValueCommand -> item.CommandRow(
-                                    index = index,
-                                    codeItems = viewState.codeItems,
-                                    isExecuting = viewState.executingCommandIndex == index,
-                                    isAnyCommandExecuting = isCommandExecution,
-                                    viewModel = viewModel
-                                )
-
-                                is GotoCommand -> item.CommandRow(
-                                    index = index,
-                                    isExecuting = viewState.executingCommandIndex == index,
-                                    isCommandExecution = isCommandExecution,
-                                    viewModel = viewModel
-                                )
+                                is GotoCommand -> {
+                                    item.CommandRow(commandRowModifier)
+                                }
                             }
                             if (index == viewState.commandItems.lastIndex) {
                                 if ((viewState.itemIndexHovered ?: -1) > viewState.commandItems.lastIndex) {
