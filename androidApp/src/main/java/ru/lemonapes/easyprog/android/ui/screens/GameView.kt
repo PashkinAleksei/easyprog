@@ -14,9 +14,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -25,14 +22,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.lemonapes.easyprog.android.GameListener
-import ru.lemonapes.easyprog.android.GameViewModel
 import ru.lemonapes.easyprog.android.GameViewState
 import ru.lemonapes.easyprog.android.MyApplicationTheme
 import ru.lemonapes.easyprog.android.R
-import ru.lemonapes.easyprog.android.commands.CopyValueCommand
-import ru.lemonapes.easyprog.android.commands.MoveValueCommand
+import ru.lemonapes.easyprog.android.preview.PreviewGameListener
+import ru.lemonapes.easyprog.android.preview.PreviewGameState
 import ru.lemonapes.easyprog.android.ui.columns.CodeColumn
 import ru.lemonapes.easyprog.android.ui.columns.CommandsColumn
 import ru.lemonapes.easyprog.android.ui.columns.SourceColumn
@@ -221,17 +216,9 @@ fun GameView(
 private fun GameViewPreview() {
     MyApplicationTheme {
         Surface {
-            val viewModel = viewModel<GameViewModel>()
-
-            LaunchedEffect(Unit) {
-                viewModel.onAddCommand(CopyValueCommand(), true)
-                viewModel.onAddCommand(MoveValueCommand(), true)
-            }
-
-            val viewState by viewModel.viewStateHandler.collectAsState()
             GameView(
-                viewState = viewState,
-                listener = viewModel,
+                viewState = PreviewGameState.getLevel1(),
+                listener = PreviewGameListener(),
                 onBackToMenu = {}
             )
         }
@@ -243,13 +230,9 @@ private fun GameViewPreview() {
 private fun GameViewEmptyPreview() {
     MyApplicationTheme {
         Surface {
-            val viewModel = viewModel<GameViewModel>()
-            viewModel.loadLevel(1)
-
-            val viewState by viewModel.viewStateHandler.collectAsState()
             GameView(
-                viewState = viewState,
-                listener = viewModel,
+                viewState = PreviewGameState.getLevel1(),
+                listener = PreviewGameListener(),
                 onBackToMenu = {}
             )
         }

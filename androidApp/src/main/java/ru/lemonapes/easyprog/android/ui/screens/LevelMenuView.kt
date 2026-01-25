@@ -42,12 +42,12 @@ fun LevelMenuView(
     Column(modifier.fillMaxSize()) {
         Spacer(Modifier.weight(1f))
         LazyVerticalGrid(
-            columns = GridCells.Fixed(8),
+            columns = GridCells.Fixed(7),
             modifier = modifier
                 .padding(AppDimensions.dp16)
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(AppDimensions.dp32),
-            horizontalArrangement = Arrangement.spacedBy(AppDimensions.dp32),
+            verticalArrangement = Arrangement.spacedBy(AppDimensions.dp16),
+            horizontalArrangement = Arrangement.spacedBy(AppDimensions.dp16),
             contentPadding = PaddingValues(AppDimensions.dp8)
         ) {
             items(state.levels.take(24).size) { index ->

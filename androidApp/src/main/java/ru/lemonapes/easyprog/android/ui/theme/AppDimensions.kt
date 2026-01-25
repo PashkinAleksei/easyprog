@@ -26,7 +26,7 @@ object AppDimensions {
     val stopIconSize = 50.dp
     val menuIconSize = 50.dp
     val clearCommandsIconSize = 40.dp
-    val questionIconSize = 40.dp
+    val questionIconSize = 34.dp
     val dialogIconButtonSize = 48.dp
 
     val topPadding = 50.dp

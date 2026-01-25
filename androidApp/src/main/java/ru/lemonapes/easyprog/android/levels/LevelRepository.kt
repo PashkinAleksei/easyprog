@@ -228,14 +228,13 @@ object LevelRepository {
                 description = "Увеличь значение переменной на 1",
                 codeItems = persistentListOf(
                     CodePeace.IntVariable(id = 1, value = 5, colorIndex = 0),
-                    CodePeace.IntVariable(id = 2, value = null, colorIndex = 1),
                 ),
                 availableCommands = persistentListOf(
                     IncValueCommand(),
                 ),
                 victoryCondition = VictoryCondition.VariableEquals(index = 0, expectedValue = 6),
             )
-        ),
+        ), //TODO:Удалить
 
         Pair(
             12, LevelConfig(
@@ -244,7 +243,6 @@ object LevelRepository {
                 description = "Увеличь значение переменной дважды",
                 codeItems = persistentListOf(
                     CodePeace.IntVariable(id = 1, value = 0, colorIndex = 0),
-                    CodePeace.IntVariable(id = 2, value = null, colorIndex = 1),
                 ),
                 availableCommands = persistentListOf(
                     IncValueCommand(),
@@ -279,11 +277,12 @@ object LevelRepository {
                 title = "Равенство через инкремент",
                 description = "Сделай обе переменные равными, используя инкремент",
                 codeItems = persistentListOf(
-                    CodePeace.IntVariable(id = 1, value = 5, colorIndex = 0),
+                    CodePeace.IntVariable(id = 1, value = 10, colorIndex = 0),
                     CodePeace.IntVariable(id = 2, value = 4, colorIndex = 1),
                 ),
                 availableCommands = persistentListOf(
                     IncValueCommand(),
+                    GotoCommand.INITIAL,
                 ),
                 victoryCondition = VictoryCondition.VariablesEqual(index1 = 0, index2 = 1),
             )
@@ -320,8 +319,8 @@ object LevelRepository {
                     CodePeace.IntVariable(id = 1, value = 4, colorIndex = 0),
                 ),
                 availableCommands = persistentListOf(
-                    CopyValueCommand(),
                     IncValueCommand(),
+                    GotoCommand.INITIAL,
                 ),
                 victoryCondition = VictoryCondition.VariableEquals(index = 0, expectedValue = 8),
             )
@@ -330,10 +329,30 @@ object LevelRepository {
         Pair(
             17, LevelConfig(
                 id = 17,
-                title = "Счетчик",
-                description = "Создай последовательность 1, 2, 3, 4 из пустых переменных",
+                title = "Удвоение значений",
+                description = "Удвой значение переменных",
                 codeItems = persistentListOf(
-                    CodePeace.IntVariable(id = 1, value = null, colorIndex = 0),
+                    CodePeace.IntVariable(id = 1, value = 4, colorIndex = 0),
+                    CodePeace.IntVariable(id = 1, value = 6, colorIndex = 1),
+                ),
+                availableCommands = persistentListOf(
+                    IncValueCommand(),
+                    GotoCommand.INITIAL,
+                ),
+                victoryCondition = VictoryCondition.All(
+                    VictoryCondition.VariableEquals(index = 0, expectedValue = 8),
+                    VictoryCondition.VariableEquals(index = 1, expectedValue = 12)
+                ),
+            )
+        ),
+
+        Pair(
+            18, LevelConfig(
+                id = 18,
+                title = "Счетчик",
+                description = "Создай последовательность 1, 2, 3, 4",
+                codeItems = persistentListOf(
+                    CodePeace.IntVariable(id = 1, value = 0, colorIndex = 0),
                     CodePeace.IntVariable(id = 2, value = null, colorIndex = 1),
                     CodePeace.IntVariable(id = 3, value = null, colorIndex = 2),
                     CodePeace.IntVariable(id = 4, value = null, colorIndex = 3),

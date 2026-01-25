@@ -16,6 +16,7 @@ data class IncValueCommand(
 ) : SingleVariableCommand {
     @StringRes
     override val textRes = R.string.command_inc_text
+
     @DrawableRes
     override val iconRes: Int = R.drawable.ic_increment
     override val stateId = toString()
@@ -32,7 +33,7 @@ data class IncValueCommand(
         val targetIndex = target!!
         val targetItem = newCodeItems.removeAt(targetIndex) as CodePeace.IntVariable
 
-        val newValue = (targetItem.value ?: 0) + 1
+        val newValue = targetItem.value?.let { it + 1 }
         newCodeItems.add(targetIndex, targetItem.copy(value = newValue))
 
         return CommandResult(

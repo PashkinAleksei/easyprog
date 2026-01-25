@@ -17,7 +17,7 @@ data class GotoCommand(
 ) : PairCommand {
 
     companion object{
-        val EMPTY = GotoCommand(type = PairCommand.PairType.FIRST, pairId = 0, colorIndex = 0)
+        val INITIAL = GotoCommand(type = PairCommand.PairType.FIRST, pairId = 0, colorIndex = 0)
     }
 
     @StringRes

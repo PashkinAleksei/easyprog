@@ -21,8 +21,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,21 +28,19 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.lemonapes.easyprog.android.GameListener
-import ru.lemonapes.easyprog.android.GameViewModel
 import ru.lemonapes.easyprog.android.GameViewState
 import ru.lemonapes.easyprog.android.MyApplicationTheme
 import ru.lemonapes.easyprog.android.R
-import ru.lemonapes.easyprog.android.commands.CopyValueCommand
 import ru.lemonapes.easyprog.android.commands.GotoCommand
-import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 import ru.lemonapes.easyprog.android.commands.SingleVariableCommand
 import ru.lemonapes.easyprog.android.commands.TwoVariableCommand
 import ru.lemonapes.easyprog.android.drag_and_drop_target.createBotItemDragAndDropTarget
 import ru.lemonapes.easyprog.android.drag_and_drop_target.createColumnDragAndDropTarget
 import ru.lemonapes.easyprog.android.drag_and_drop_target.createTopItemDragAndDropTarget
 import ru.lemonapes.easyprog.android.extensions.dragAndDropTextTarget
+import ru.lemonapes.easyprog.android.preview.PreviewGameListener
+import ru.lemonapes.easyprog.android.preview.PreviewGameState
 import ru.lemonapes.easyprog.android.ui.components.CommandRow
 import ru.lemonapes.easyprog.android.ui.components.commandRowModifier
 import ru.lemonapes.easyprog.android.ui.theme.AppColors
@@ -173,7 +169,7 @@ fun RowScope.CommandsColumn(
                             modifier = Modifier
                                 .matchParentSize()
                         ) {
-                            val topItemDragAndDropTarget = remember(index, item,  listener) {
+                            val topItemDragAndDropTarget = remember(index, item, listener) {
                                 createTopItemDragAndDropTarget(index, listener)
                             }
                             val botItemDragAndDropTarget = remember(index, item, listener) {
@@ -204,18 +200,10 @@ fun RowScope.CommandsColumn(
 private fun CommandsColumnPreview() {
     MyApplicationTheme {
         Surface {
-            val viewModel = viewModel<GameViewModel>()
-
-            LaunchedEffect(Unit) {
-                viewModel.onAddCommand(CopyValueCommand(1, 0, 1), true)
-                viewModel.onAddCommand(MoveValueCommand(2, 1, 2), true)
-            }
-
-            val viewState by viewModel.viewStateHandler.collectAsState()
             Row {
                 CommandsColumn(
-                    viewState = viewState,
-                    listener = viewModel
+                    viewState = PreviewGameState.getLevel1(),
+                    listener = PreviewGameListener(),
                 )
             }
         }
@@ -225,8 +213,9 @@ private fun CommandsColumnPreview() {
 private suspend fun scrollToAddedItemIndex(
     viewState: GameViewState,
     listState: LazyListState,
-    listener: GameListener
+    listener: GameListener,
 ) {
+    //TODO: Срабатывает не всегда. Нужно логировать и разбираться
     viewState.scrollToIndex?.let { index ->
         if (index in viewState.commandItems.indices) {
             val layoutInfo = listState.layoutInfo
@@ -271,12 +260,10 @@ private suspend fun scrollToAddedItemIndex(
 private fun CommandsColumnEmptyPreview() {
     MyApplicationTheme {
         Surface {
-            val viewModel = viewModel<GameViewModel>()
-            val viewState by viewModel.viewStateHandler.collectAsState()
             Row {
                 CommandsColumn(
-                    viewState = viewState,
-                    listener = viewModel
+                    viewState = PreviewGameState.getLevel1(),
+                    listener = PreviewGameListener(),
                 )
             }
         }
