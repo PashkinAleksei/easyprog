@@ -24,11 +24,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Core Architecture Patterns
 
-1. **MVVM** - ViewModels manage UI state via `StateFlow`
+1. **MVVM with Listener Pattern** - ViewModels manage UI state via `StateFlow`, UI interacts via `GameListener` interface
 2. **Repository Pattern** - `GameRepository` abstracts database operations
 3. **Immutable State** - All state uses `ImmutableList` from kotlinx.collections
 4. **Sealed Classes** - Type-safe domain models (`CodePeace`, `CommandItem`, `VictoryCondition`)
 5. **Functional Updates** - Commands are functions: `(ImmutableList<CodePeace>) -> ImmutableList<CodePeace>`
+6. **Separation of Concerns** - ViewModels are never passed directly to Composables, only via `GameListener` interface
 
 ## Common Development Commands
 
@@ -139,19 +140,57 @@ Validated in `GameViewModel.checkVictoryCondition()` after command execution.
 
 ### UI State Management
 
-**`MainViewState`** contains:
+**`GameViewState`** contains:
 - `codeItems` - Current variable states (immutable list)
 - `commandItems` - User's command sequence
 - `sourceItems` - Available commands to drag
 - `executingCommandIndex` - Highlights command during animated execution
+- `draggedCommandItem` - Currently dragged command during drag-and-drop
+- `isCommandColumnHovered` - Hover state for command column
+- `itemIndexHovered` - Index of hovered item for insertion preview
 - Dialog visibility flags
+- `executionSpeed` - Current execution speed setting
+
+**GameListener Interface:**
+
+All UI interactions go through the `GameListener` interface, which `GameViewModel` implements:
+
+```kotlin
+interface GameListener {
+    // Command management
+    fun onAddCommand(command: CommandItem, isNewItem: Boolean): Boolean
+    fun onRemoveCommand(index: Int): CommandItem?
+    fun onUpdateCommand(index: Int, command: CommandItem)
+
+    // Drag and drop events
+    fun onSetDraggedCommandItem(item: CommandItem?)
+    fun onColumnItemDrop(event: DragAndDropEvent): Boolean
+    fun onTopItemDrop(index: Int, event: DragAndDropEvent): Boolean
+
+    // Execution control
+    fun onExecuteCommands()
+    fun onAbortExecution()
+    fun onCycleExecutionSpeed()
+
+    // UI state
+    fun onSetItemIndexHovered(index: Int?)
+    fun onShowLevelInfoDialog()
+    // ... other methods
+}
+```
 
 **State Flow:**
 ```
-User drags command → GameViewModel.onAddCommand() →
-Update state (immutable copy) → Compose recomposes →
+User drags command → listener.onAddCommand() →
+GameViewModel updates state (immutable copy) →
+StateFlow emits new state → Compose recomposes →
 UI reflects new command list
 ```
+
+**Important:** ViewModels are NEVER passed directly to Composable functions. Instead:
+- Pass `viewState: GameViewState` for data
+- Pass `listener: GameListener` for callbacks
+- ViewModel implements `GameListener` interface
 
 ### Navigation
 
@@ -185,19 +224,27 @@ state.commandItems.add(newCommand) // Compile error, no add() mutation method
 
 Commands execute sequentially with configurable delay for visual feedback:
 
-1. User clicks play button → `GameViewModel.executeCommands()`
+1. User clicks play button → `listener.onExecuteCommands()` → `GameViewModel.onExecuteCommands()`
 2. Execution job starts and stores reference in `executionJob: Job?`
 3. Loop through `commandItems` with dynamic `delay(executionSpeed.delayMs)`
 4. Set `executingCommandIndex` to highlight current command
 5. Execute command: `commandResult = command.execute(codeItems, commandItems, currentCommandIndex)`
 6. Update state with `commandResult.newCodeItems`
 7. Move to `commandResult.nextCommandIndex` (enables jump control via GoTo)
-8. Check victory condition after all commands complete
-9. Show VictoryDialog or TryAgainDialog based on result
-10. Clear `executionJob` reference
+8. **Check victory condition after EACH command** - if condition met, stop execution immediately
+9. If victory achieved, show VictoryDialog and return early
+10. If all commands executed without victory, show TryAgainDialog
+11. Clear `executionJob` reference
+
+**Victory Check After Each Command:**
+- Victory condition is checked after each command execution, not just at the end
+- If condition is met mid-execution, execution stops immediately
+- Current state is preserved (not reset)
+- VictoryDialog is shown
+- Level is marked as completed
 
 **Execution can be stopped mid-run:**
-- User clicks stop button → `GameViewModel.stopExecution()`
+- User clicks stop button → `listener.onAbortExecution()` → `GameViewModel.onAbortExecution()`
 - Cancels the coroutine job
 - Resets `executingCommandIndex` to null
 - Restores initial code items state
@@ -436,19 +483,76 @@ Room database code generation runs automatically during build via KSP plugin. If
 - **Android:** Min SDK 24 (Android 7.0), Target SDK 36 (Android 15)
 - **iOS:** x64, Arm64, Simulator Arm64 (framework only, no full app implementation yet)
 
+## Composable Preview Best Practices
+
+### Never Pass ViewModel to Composables
+
+**Bad:**
+```kotlin
+@Composable
+fun GameView(viewModel: GameViewModel) { // ❌ Never do this
+    val viewState by viewModel.viewState.collectAsState()
+    // ...
+}
+```
+
+**Good:**
+```kotlin
+@Composable
+fun GameView(
+    viewState: GameViewState,
+    listener: GameListener,
+) { // ✅ Pass state and listener interface
+    // ...
+}
+```
+
+### Preview Setup
+
+**Location:** `androidApp/src/main/java/ru/lemonapes/easyprog/android/preview/`
+
+Use fake implementations for Preview to avoid ViewModel side effects (DB access, network, I/O):
+
+```kotlin
+@Preview
+@Composable
+private fun GameViewPreview() {
+    MyApplicationTheme {
+        GameView(
+            viewState = PreviewGameState.getLevel1(), // Predefined state
+            listener = PreviewGameListener(), // Fake implementation
+            onBackToMenu = {}
+        )
+    }
+}
+```
+
+**PreviewGameListener** - Fake implementation of `GameListener` with no-op methods
+**PreviewGameState** - Factory object with predefined `GameViewState` instances for testing different scenarios
+
+### Why This Matters
+
+- Preview executes in IDE, not in test/runtime environment
+- ViewModels trigger database operations that fail in Preview
+- Mocking frameworks (Mockito, MockK) don't work in Preview
+- Fake implementations prevent "ViewModel operations not supported" warnings
+
 ## Common Gotchas
 
-1. **Application Singleton:** Database and repository accessed via `EasyProgApplication.getInstance()`, requires application context
-2. **Landscape Only:** App forces landscape orientation in AndroidManifest
-3. **No iOS Implementation:** iOS app is just a stub that displays greeting from shared module
-4. **Immutable State:** Forgetting to use immutable collections breaks state management
-5. **Room KSP:** After entity/DAO changes, rebuild with KSP or IDE won't recognize generated code
-6. **Victory Conditions:** Indices in `VictoryCondition` are 0-based, matching `codeItems` list positions
-7. **GoTo Color Indices:** Always use `findFirstAvailableColorIndex()` when creating new pairs to prevent color duplication after deleting/re-adding
-8. **Execution Job Management:** Must store `executionJob` reference to enable stop functionality; always null-check before canceling
-9. **CommandRow Refactoring:** When modifying command UI, remember components are split across three files (TwoVariable, SingleVariable, Goto)
-10. **Drag During Execution:** All drag sources and drop targets must check `isCommandExecution` to block interactions during command execution
-11. **Execution Speed State:** ExecutionSpeed is part of GameViewState and persists across replays within same level session
+1. **Never Pass ViewModel to Composables:** Always use `viewState: GameViewState` and `listener: GameListener` instead
+2. **Application Singleton:** Database and repository accessed via `EasyProgApplication.getInstance()`, requires application context
+3. **Landscape Only:** App forces landscape orientation in AndroidManifest
+4. **No iOS Implementation:** iOS app is just a stub that displays greeting from shared module
+5. **Immutable State:** Forgetting to use immutable collections breaks state management
+6. **Room KSP:** After entity/DAO changes, rebuild with KSP or IDE won't recognize generated code
+7. **Victory Conditions:** Indices in `VictoryCondition` are 0-based, matching `codeItems` list positions
+8. **GoTo Color Indices:** Always use `findFirstAvailableColorIndex()` when creating new pairs to prevent color duplication after deleting/re-adding
+9. **Execution Job Management:** Must store `executionJob` reference to enable stop functionality; always null-check before canceling
+10. **CommandRow Refactoring:** When modifying command UI, remember components are split across three files (TwoVariable, SingleVariable, Goto)
+11. **Drag During Execution:** All drag sources and drop targets must check `isCommandExecution` to block interactions during command execution
+12. **Execution Speed State:** ExecutionSpeed is part of GameViewState and persists across replays within same level session
+13. **Preview Fakes:** Always use `PreviewGameListener` and `PreviewGameState` in Composable Previews, never real ViewModels
+14. **Victory Check Timing:** Victory condition is checked after EACH command execution, not just at the end of sequence
 
 ## Code Locations Quick Reference
 
