@@ -2,6 +2,8 @@ package ru.lemonapes.easyprog.android.navigation
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,15 +25,18 @@ fun NavGraphBuilder.gameNavigation(navController: NavHostController) {
             viewModel.loadLevel(game.levelId)
         }
 
-        val globalDragAndDropTarget = remember {
-            viewModel.createGlobalDragAndDropTarget()
+        val viewState by viewModel.viewStateHandler.collectAsState()
+
+        val globalDragAndDropTarget = remember(viewModel) {
+            createGlobalDragAndDropTarget(listener = viewModel)
         }
 
         GameView(
             modifier = Modifier
                 .fillMaxSize()
                 .dragAndDropTextTarget(globalDragAndDropTarget),
-            viewModel = viewModel,
+            viewState = viewState,
+            listener = viewModel,
             onBackToMenu = {
                 navController.navigate(Screens.LevelMenu) {
                     popUpTo(Screens.LevelMenu) { inclusive = true }

@@ -18,7 +18,7 @@ import androidx.compose.ui.res.stringResource
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import ru.lemonapes.easyprog.android.CodePeace
-import ru.lemonapes.easyprog.android.GameViewModel
+import ru.lemonapes.easyprog.android.GameListener
 import ru.lemonapes.easyprog.android.R
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
@@ -37,7 +37,7 @@ import ru.lemonapes.easyprog.android.ui.theme.AppShapes
 fun TwoVariableCommand.CommandRow(
     index: Int,
     codeItems: ImmutableList<CodePeace>,
-    viewModel: GameViewModel,
+    listener: GameListener,
     modifier: Modifier = Modifier,
 ) {
     val variables = remember(codeItems) {
@@ -74,12 +74,12 @@ fun TwoVariableCommand.CommandRow(
             variables = variables,
             onVariableSelected = { variable ->
                 when (this@CommandRow) {
-                    is MoveValueCommand -> viewModel.updateCommand(
+                    is MoveValueCommand -> listener.onUpdateCommand(
                         index,
                         copy(source = codeItems.indexOf(variable))
                     )
 
-                    is CopyValueCommand -> viewModel.updateCommand(
+                    is CopyValueCommand -> listener.onUpdateCommand(
                         index,
                         copy(source = codeItems.indexOf(variable))
                     )
@@ -92,7 +92,7 @@ fun TwoVariableCommand.CommandRow(
             modifier = Modifier
                 .padding(top = dp2)
                 .size(dp28),
-            painter = painterResource(R.drawable.arrow_right_alt),
+            painter = painterResource(R.drawable.ic_arrow_right_alt),
             contentDescription = stringResource(R.string.to),
             colorFilter = ColorFilter.tint(AppColors.COLOR_ACCENT),
         )
@@ -104,12 +104,12 @@ fun TwoVariableCommand.CommandRow(
             variables = variables,
             onVariableSelected = { variable ->
                 when (this@CommandRow) {
-                    is CopyValueCommand -> viewModel.updateCommand(
+                    is CopyValueCommand -> listener.onUpdateCommand(
                         index,
                         copy(target = codeItems.indexOf(variable))
                     )
 
-                    is MoveValueCommand -> viewModel.updateCommand(
+                    is MoveValueCommand -> listener.onUpdateCommand(
                         index,
                         copy(target = codeItems.indexOf(variable))
                     )

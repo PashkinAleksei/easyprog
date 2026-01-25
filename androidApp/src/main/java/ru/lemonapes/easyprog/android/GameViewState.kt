@@ -29,10 +29,11 @@ data class GameViewState(
     val levelTitle: String = "",
     val levelDescription: String = "",
     val executingCommandIndex: Int? = null,
-    val isHovered: Boolean = false,
+    val isCommandColumnHovered: Boolean = false,
     val itemIndexHovered: Int? = null,
     val scrollToIndex: Int? = null,
     val executionSpeed: ExecutionSpeed = ExecutionSpeed.SPEED_1X,
+    val draggedCommandItem: CommandItem? = null,
 ) {
     val isCommandExecution: Boolean
         get() = executingCommandIndex != null

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import android.icu.util.Calendar
+import androidx.compose.ui.draganddrop.DragAndDropEvent
 import ru.lemonapes.easyprog.android.commands.CommandItem
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
 import ru.lemonapes.easyprog.android.commands.GotoCommand
@@ -20,18 +21,19 @@ import ru.lemonapes.easyprog.android.commands.IncValueCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 import ru.lemonapes.easyprog.android.commands.PairCommand
 import ru.lemonapes.easyprog.android.data.GameRepository
+import ru.lemonapes.easyprog.android.drag_and_drop_target.label
 import ru.lemonapes.easyprog.android.levels.LevelConfig
 import ru.lemonapes.easyprog.android.levels.LevelRepository
 
-class GameViewModel : ViewModel() {
+class GameViewModel : ViewModel(), GameListener {
 
     private val gameRepository: GameRepository = EasyProgApplication.getInstance().gameRepository
 
     private var currentLevelConfig: LevelConfig? = null
     private var initialCodeItems: ImmutableList<CodePeace> = persistentListOf()
 
-    private val _viewState = MutableStateFlow(GameViewState())
-    val viewState: StateFlow<GameViewState> = _viewState.asStateFlow()
+    private val _viewStateHandler = MutableStateFlow(GameViewState())
+    val viewStateHandler: StateFlow<GameViewState> = _viewStateHandler.asStateFlow()
 
     private var executionJob: Job? = null
 
@@ -40,7 +42,7 @@ class GameViewModel : ViewModel() {
 
         currentLevelConfig?.let { config ->
             initialCodeItems = config.codeItems
-            _viewState.update {
+            _viewStateHandler.update {
                 GameViewState(
                     levelId = levelId,
                     codeItems = config.codeItems,
@@ -54,7 +56,7 @@ class GameViewModel : ViewModel() {
             viewModelScope.launch {
                 val savedCommands = gameRepository.getSavedCommands(levelId)
                 if (savedCommands.isNotEmpty()) {
-                    _viewState.update { it.copy(commandItems = savedCommands) }
+                    _viewStateHandler.update { it.copy(commandItems = savedCommands) }
                 }
             }
         }
@@ -63,22 +65,93 @@ class GameViewModel : ViewModel() {
     private fun saveCommandsToDb() {
         viewModelScope.launch {
             gameRepository.saveCommands(
-                levelId = _viewState.value.levelId,
-                commands = _viewState.value.commandItems
+                levelId = _viewStateHandler.value.levelId,
+                commands = _viewStateHandler.value.commandItems
             )
         }
     }
 
-    private val _draggedCommandItem = MutableStateFlow<CommandItem?>(null)
-    val draggedCommandItem: StateFlow<CommandItem?> = _draggedCommandItem.asStateFlow()
-
-    fun setDraggedCommandItem(item: CommandItem?) {
-        _draggedCommandItem.value = item
+    // Реализация GameListener
+    override fun onSetDraggedCommandItem(item: CommandItem?) {
+        _viewStateHandler.update { it.copy(draggedCommandItem = item) }
     }
 
-    // Управление командами
-    fun addCommand(command: CommandItem, isNewItem: Boolean): Boolean {
-        _viewState.update {
+    override fun onBotItemDrop(index: Int, event: DragAndDropEvent): Boolean {
+        val viewState = _viewStateHandler.value
+
+        // Игнорировать drop во время выполнения команд
+        val addingResult = if (!viewState.isCommandExecution) {
+            val isNewItem = event.label == "new_item"
+            event.toCommandItem(viewState.draggedCommandItem)
+                ?.let { command ->
+                    onAddCommandAtIndex(
+                        index = index + 1,
+                        command = command,
+                        isNewItem = isNewItem
+                    )
+                } ?: false
+        } else false
+        _viewStateHandler.update { viewState ->
+            viewState.copy(itemIndexHovered = null, draggedCommandItem = null)
+        }
+        return addingResult
+    }
+
+    override fun onTopItemDrop(index: Int, event: DragAndDropEvent): Boolean {
+        val viewState = viewStateHandler.value
+
+        // Игнорировать drop во время выполнения команд
+        val addingResult = if (!viewState.isCommandExecution) {
+            val isNewItem = event.label == "new_item"
+            event.toCommandItem(viewState.draggedCommandItem)?.let { command ->
+                onAddCommandAtIndex(
+                    index = index,
+                    command = command,
+                    isNewItem = isNewItem
+                )
+            } ?: false
+        } else false
+        _viewStateHandler.update { viewState ->
+            viewState.copy(itemIndexHovered = null, draggedCommandItem = null)
+        }
+        return addingResult
+    }
+
+    override fun onGlobalItemDrop(event: DragAndDropEvent): Boolean {
+        val viewState = viewStateHandler.value
+
+        val isNewItem = event.label == "new_item"
+        // Игнорировать drop во время выполнения команд
+        if (!viewState.isCommandExecution) {
+            event.toCommandItem(viewState.draggedCommandItem)?.let { command ->
+                when (command) {
+                    is PairCommand -> if (!isNewItem) removeCommandPair(command)
+                    else -> Unit
+                }
+            }
+
+        } else onSetItemIndexHovered(null)
+        return !isNewItem
+    }
+
+    override fun onColumnItemDrop(event: DragAndDropEvent): Boolean {
+        val viewState = viewStateHandler.value
+
+        // Игнорировать drop во время выполнения команд
+        val addingResult = if (!viewState.isCommandExecution) {
+            val isNewItem = event.label == "new_item"
+            event.toCommandItem(viewState.draggedCommandItem)?.let { command ->
+                onAddCommand(command, isNewItem)
+            } ?: false
+        } else false
+        _viewStateHandler.update { viewState ->
+            viewState.copy(itemIndexHovered = null, draggedCommandItem = null, isCommandColumnHovered=false)
+        }
+        return addingResult
+    }
+
+    override fun onAddCommand(command: CommandItem, isNewItem: Boolean): Boolean {
+        _viewStateHandler.update {
             fun addCommandRaw() = it.copy(commandItems = (it.commandItems + command).toImmutableList())
             // Если добавляется goto команда, создаем пару
             when (command) {
@@ -124,8 +197,8 @@ class GameViewModel : ViewModel() {
         return true
     }
 
-    fun addCommandAtIndex(index: Int, command: CommandItem, isNewItem: Boolean): Boolean {
-        _viewState.update {
+    override fun onAddCommandAtIndex(index: Int, command: CommandItem, isNewItem: Boolean): Boolean {
+        _viewStateHandler.update {
             val newList = it.commandItems.toMutableList()
 
             // Если добавляется goto команда, создаем пару
@@ -165,9 +238,9 @@ class GameViewModel : ViewModel() {
         return true
     }
 
-    fun removeCommand(index: Int): CommandItem? {
+    override fun onRemoveCommand(index: Int): CommandItem? {
         var removedItem: CommandItem? = null
-        _viewState.update {
+        _viewStateHandler.update {
             val newList = it.commandItems.toMutableList()
             removedItem = newList.removeAt(index)
             it.copy(commandItems = newList.toImmutableList())
@@ -179,9 +252,9 @@ class GameViewModel : ViewModel() {
     fun removeCommandPair(command: PairCommand) {
         when (command) {
             is GotoCommand -> {
-                viewState.value.commandItems.forEachIndexed loop@{ index, found ->
+                viewStateHandler.value.commandItems.forEachIndexed loop@{ index, found ->
                     if (found is GotoCommand && command.pairId == found.pairId) {
-                        removeCommand(index)
+                        onRemoveCommand(index)
                         return@loop
                     }
                 }
@@ -189,8 +262,8 @@ class GameViewModel : ViewModel() {
         }
     }
 
-    fun updateCommand(index: Int, command: CommandItem) {
-        _viewState.update {
+    override fun onUpdateCommand(index: Int, command: CommandItem) {
+        _viewStateHandler.update {
             val newList = it.commandItems.toMutableList()
             newList[index] = command
             it.copy(commandItems = newList.toImmutableList())
@@ -199,85 +272,89 @@ class GameViewModel : ViewModel() {
     }
 
     fun resetCodeItems() {
-        _viewState.update {
+        _viewStateHandler.update {
             it.copy(codeItems = initialCodeItems)
         }
     }
 
-    fun clearCommands() {
-        _viewState.update {
+    override fun onClearCommands() {
+        _viewStateHandler.update {
             it.copy(commandItems = persistentListOf())
         }
         saveCommandsToDb()
     }
 
-    fun showVictoryDialog() {
-        _viewState.update { it.copy(showVictoryDialog = true) }
+    private fun showVictoryDialog() {
+        _viewStateHandler.update { it.copy(showVictoryDialog = true) }
     }
 
-    fun hideVictoryDialog() {
-        _viewState.update { it.copy(showVictoryDialog = false) }
+    private fun hideVictoryDialog() {
+        _viewStateHandler.update { it.copy(showVictoryDialog = false) }
     }
 
-    fun showTryAgainDialog() {
-        _viewState.update { it.copy(showTryAgainDialog = true) }
+    private fun showTryAgainDialog() {
+        _viewStateHandler.update { it.copy(showTryAgainDialog = true) }
     }
 
-    fun hideTryAgainDialog() {
-        _viewState.update { it.copy(showTryAgainDialog = false) }
+    private fun hideTryAgainDialog() {
+        _viewStateHandler.update { it.copy(showTryAgainDialog = false) }
     }
 
-    fun showLevelInfoDialog() {
-        _viewState.update { it.copy(showLevelInfoDialog = true) }
+    override fun onShowLevelInfoDialog() {
+        _viewStateHandler.update { it.copy(showLevelInfoDialog = true) }
     }
 
-    fun hideLevelInfoDialog() {
-        _viewState.update { it.copy(showLevelInfoDialog = false) }
+    override fun onHideLevelInfoDialog() {
+        _viewStateHandler.update { it.copy(showLevelInfoDialog = false) }
     }
 
-    fun showClearCommandsDialog() {
-        _viewState.update { it.copy(showClearCommandsDialog = true) }
+    override fun onShowClearCommandsDialog() {
+        _viewStateHandler.update { it.copy(showClearCommandsDialog = true) }
     }
 
-    fun hideClearCommandsDialog() {
-        _viewState.update { it.copy(showClearCommandsDialog = false) }
+    override fun onHideClearCommandsDialog() {
+        _viewStateHandler.update { it.copy(showClearCommandsDialog = false) }
     }
 
-    fun setHovered(isHovered: Boolean) {
-        _viewState.update { it.copy(isHovered = isHovered && it.commandItems.isEmpty()) }
+    override fun onSetComandColumnHovered(isHovered: Boolean) {
+        _viewStateHandler.update { it.copy(isCommandColumnHovered = isHovered) }
     }
 
-    fun setItemIndexHovered(index: Int?) {
-        _viewState.update { it.copy(itemIndexHovered = index) }
+    override fun onSetItemIndexHovered(index: Int?) {
+        _viewStateHandler.update { it.copy(itemIndexHovered = index) }
     }
 
-    fun setExecutingCommandIndex(index: Int?) {
-        _viewState.update { it.copy(executingCommandIndex = index) }
+    override fun onSetLastItemHovered() {
+        _viewStateHandler.update { it.copy(itemIndexHovered = it.commandItems.lastIndex + 1) }
     }
 
-    fun clearScrollToIndex() {
-        _viewState.update { it.copy(scrollToIndex = null) }
+    private fun setExecutingCommandIndex(index: Int?) {
+        _viewStateHandler.update { it.copy(executingCommandIndex = index) }
     }
 
-    fun cycleExecutionSpeed() {
-        _viewState.update { it.copy(executionSpeed = it.executionSpeed.next()) }
+    override fun onClearScrollToIndex() {
+        _viewStateHandler.update { it.copy(scrollToIndex = null) }
     }
 
-    fun executeCommands() {
+    override fun onCycleExecutionSpeed() {
+        _viewStateHandler.update { it.copy(executionSpeed = it.executionSpeed.next()) }
+    }
+
+    override fun onExecuteCommands() {
         executionJob = viewModelScope.launch {
             if (!validateCommands()) {
                 return@launch
             }
 
             var currentCommandIndex = 0
-            val maxIterations = _viewState.value.commandItems.size * 100 // Защита от бесконечных циклов
+            val maxIterations = _viewStateHandler.value.commandItems.size * 100 // Защита от бесконечных циклов
             var iterationCount = 0
 
-            while (currentCommandIndex < _viewState.value.commandItems.size && iterationCount < maxIterations) {
+            while (currentCommandIndex < _viewStateHandler.value.commandItems.size && iterationCount < maxIterations) {
                 iterationCount++
 
-                val command = _viewState.value.commandItems[currentCommandIndex]
-                val delayMs = _viewState.value.executionSpeed.delayMs
+                val command = _viewStateHandler.value.commandItems[currentCommandIndex]
+                val delayMs = _viewStateHandler.value.executionSpeed.delayMs
 
                 // Команда становится выделенной (выполняется)
                 setExecutingCommandIndex(currentCommandIndex)
@@ -286,11 +363,11 @@ class GameViewModel : ViewModel() {
                 // Команда выполняется и обновляет состояние
                 val commandResult =
                     command.execute(
-                        codeItems = _viewState.value.codeItems,
-                        commandItems = _viewState.value.commandItems,
+                        codeItems = _viewStateHandler.value.codeItems,
+                        commandItems = _viewStateHandler.value.commandItems,
                         currentCommandIndex = currentCommandIndex
                     )
-                _viewState.update { it.copy(codeItems = commandResult.newCodeItems) }
+                _viewStateHandler.update { it.copy(codeItems = commandResult.newCodeItems) }
                 delay(delayMs)
 
                 // Команда завершена
@@ -298,14 +375,14 @@ class GameViewModel : ViewModel() {
 
                 // Проверка условия победы после каждой команды
                 if (checkVictory()) {
-                    gameRepository.markLevelCompleted(_viewState.value.levelId)
+                    gameRepository.markLevelCompleted(_viewStateHandler.value.levelId)
                     showVictoryDialog()
                     executionJob = null
                     return@launch
                 }
 
                 //Если команда последняя, завершаем цикл
-                if (_viewState.value.commandItems.size <= commandResult.nextCommandIndex) break
+                if (_viewStateHandler.value.commandItems.size <= commandResult.nextCommandIndex) break
 
                 // Определяем следующий индекс команды
                 currentCommandIndex = commandResult.nextCommandIndex
@@ -316,7 +393,7 @@ class GameViewModel : ViewModel() {
         }
     }
 
-    fun abortExecution() {
+    override fun onAbortExecution() {
         executionJob?.cancel()
         executionJob = null
         setExecutingCommandIndex(null)
@@ -325,12 +402,12 @@ class GameViewModel : ViewModel() {
 
     private fun checkVictory(): Boolean {
         val config = currentLevelConfig ?: return false
-        return config.victoryCondition.check(_viewState.value.codeItems)
+        return config.victoryCondition.check(_viewStateHandler.value.codeItems)
     }
 
     private fun validateCommands(): Boolean {
         //TODO:перенести в сами классы как функцию
-        return _viewState.value.commandItems.all { command ->
+        return _viewStateHandler.value.commandItems.all { command ->
             when (command) {
                 is CopyValueCommand -> command.source != null && command.target != null
                 is MoveValueCommand -> command.source != null && command.target != null
@@ -341,37 +418,37 @@ class GameViewModel : ViewModel() {
         }
     }
 
-    fun onVictoryReplay() {
+    override fun onVictoryReplay() {
         hideVictoryDialog()
         resetCodeItems()
     }
 
-    fun onVictoryMenu(navigateToMenu: () -> Unit) {
+    override fun onVictoryMenu(navigateToMenu: () -> Unit) {
         hideVictoryDialog()
         resetCodeItems()
         navigateToMenu()
     }
 
-    fun onVictoryNextLevel(navigateToNextLevel: () -> Unit) {
+    override fun onVictoryNextLevel(navigateToNextLevel: () -> Unit) {
         hideVictoryDialog()
         resetCodeItems()
         navigateToNextLevel()
     }
 
-    fun onTryAgainReplay() {
+    override fun onTryAgainReplay() {
         hideTryAgainDialog()
         resetCodeItems()
     }
 
-    fun onTryAgainMenu(navigateToMenu: () -> Unit) {
+    override fun onTryAgainMenu(navigateToMenu: () -> Unit) {
         hideTryAgainDialog()
         resetCodeItems()
         navigateToMenu()
     }
 
-    fun getCurrentLevelId(): Int = _viewState.value.levelId
+    fun getCurrentLevelId(): Int = _viewStateHandler.value.levelId
 
-    fun hasNextLevel(): Boolean = LevelRepository.hasNextLevel(_viewState.value.levelId)
+    override fun hasNextLevel(): Boolean = LevelRepository.hasNextLevel(_viewStateHandler.value.levelId)
 
     /**
      * Подсчитывает количество уникальных GoTo команд (пар) в списке команд.

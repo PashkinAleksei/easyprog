@@ -26,7 +26,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import ru.lemonapes.easyprog.android.GameListener
 import ru.lemonapes.easyprog.android.GameViewModel
+import ru.lemonapes.easyprog.android.GameViewState
 import ru.lemonapes.easyprog.android.MyApplicationTheme
 import ru.lemonapes.easyprog.android.R
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
@@ -44,11 +46,11 @@ import ru.lemonapes.easyprog.android.ui.theme.AppDimensions
 @Composable
 fun GameView(
     modifier: Modifier = Modifier,
-    viewModel: GameViewModel,
+    viewState: GameViewState,
+    listener: GameListener,
     onBackToMenu: () -> Unit = {},
     onNextLevel: () -> Unit = {},
 ) {
-    val viewState by viewModel.viewState.collectAsState()
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -94,14 +96,14 @@ fun GameView(
             )
 
             IconButton(
-                onClick = { viewModel.showLevelInfoDialog() },
+                onClick = { listener.onShowLevelInfoDialog() },
                 modifier = Modifier
                     .padding(start = AppDimensions.dp16)
                     .size(AppDimensions.mainIconButtonSize)
             ) {
                 Icon(
                     modifier = Modifier.size(AppDimensions.questionIconSize),
-                    painter = painterResource(R.drawable.ic_question_2),
+                    painter = painterResource(R.drawable.ic_target),
                     contentDescription = stringResource(R.string.level_info),
                     tint = AppColors.COLOR_ACCENT
                 )
@@ -109,7 +111,7 @@ fun GameView(
 
             if (viewState.isCommandExecution) {
                 IconButton(
-                    onClick = { viewModel.cycleExecutionSpeed() },
+                    onClick = { listener.onCycleExecutionSpeed() },
                     modifier = Modifier.size(AppDimensions.mainIconButtonSize)
                 ) {
                     Icon(
@@ -121,7 +123,7 @@ fun GameView(
                 }
             } else {
                 IconButton(
-                    onClick = { viewModel.showClearCommandsDialog() },
+                    onClick = { listener.onShowClearCommandsDialog() },
                     modifier = Modifier.size(AppDimensions.mainIconButtonSize),
                     enabled = viewState.commandItems.isNotEmpty()
                 ) {
@@ -139,7 +141,7 @@ fun GameView(
 
             if (viewState.isCommandExecution) {
                 IconButton(
-                    onClick = { viewModel.abortExecution() },
+                    onClick = { listener.onAbortExecution() },
                     modifier = Modifier
                         .padding(end = AppDimensions.dp16)
                         .size(AppDimensions.mainIconButtonSize)
@@ -153,7 +155,7 @@ fun GameView(
                 }
             } else {
                 IconButton(
-                    onClick = { viewModel.executeCommands() },
+                    onClick = { listener.onExecuteCommands() },
                     modifier = Modifier
                         .padding(end = AppDimensions.dp16)
                         .size(AppDimensions.mainIconButtonSize)
@@ -174,8 +176,8 @@ fun GameView(
             horizontalArrangement = Arrangement.spacedBy(AppDimensions.dp16)
         ) {
             CodeColumn(viewState.codeItems)
-            CommandsColumn(viewState, viewModel)
-            SourceColumn(viewModel, viewState.sourceItems, viewState.isCommandExecution)
+            CommandsColumn(viewState, listener)
+            SourceColumn(listener, viewState.sourceItems, viewState.isCommandExecution)
         }
     }
 
@@ -183,33 +185,33 @@ fun GameView(
         LevelInfoDialog(
             title = viewState.levelTitle,
             description = viewState.levelDescription,
-            onDismiss = { viewModel.hideLevelInfoDialog() }
+            onDismiss = { listener.onHideLevelInfoDialog() }
         )
     }
 
     if (viewState.showVictoryDialog) {
         VictoryDialog(
-            hasNextLevel = viewModel.hasNextLevel(),
-            onReplay = viewModel::onVictoryReplay,
-            onMenu = { viewModel.onVictoryMenu(onBackToMenu) },
-            onNextLevel = { viewModel.onVictoryNextLevel(onNextLevel) }
+            hasNextLevel = listener.hasNextLevel(),
+            onReplay = listener::onVictoryReplay,
+            onMenu = { listener.onVictoryMenu(onBackToMenu) },
+            onNextLevel = { listener.onVictoryNextLevel(onNextLevel) }
         )
     }
 
     if (viewState.showTryAgainDialog) {
         TryAgainDialog(
-            onReplay = viewModel::onTryAgainReplay,
-            onMenu = { viewModel.onTryAgainMenu(onBackToMenu) }
+            onReplay = listener::onTryAgainReplay,
+            onMenu = { listener.onTryAgainMenu(onBackToMenu) }
         )
     }
 
     if (viewState.showClearCommandsDialog) {
         ClearCommandsDialog(
             onConfirm = {
-                viewModel.clearCommands()
-                viewModel.hideClearCommandsDialog()
+                listener.onClearCommands()
+                listener.onHideClearCommandsDialog()
             },
-            onCancel = { viewModel.hideClearCommandsDialog() }
+            onCancel = { listener.onHideClearCommandsDialog() }
         )
     }
 }
@@ -222,12 +224,14 @@ private fun GameViewPreview() {
             val viewModel = viewModel<GameViewModel>()
 
             LaunchedEffect(Unit) {
-                viewModel.addCommand(CopyValueCommand(), true)
-                viewModel.addCommand(MoveValueCommand(), true)
+                viewModel.onAddCommand(CopyValueCommand(), true)
+                viewModel.onAddCommand(MoveValueCommand(), true)
             }
 
+            val viewState by viewModel.viewStateHandler.collectAsState()
             GameView(
-                viewModel = viewModel,
+                viewState = viewState,
+                listener = viewModel,
                 onBackToMenu = {}
             )
         }
@@ -242,8 +246,10 @@ private fun GameViewEmptyPreview() {
             val viewModel = viewModel<GameViewModel>()
             viewModel.loadLevel(1)
 
+            val viewState by viewModel.viewStateHandler.collectAsState()
             GameView(
-                viewModel = viewModel,
+                viewState = viewState,
+                listener = viewModel,
                 onBackToMenu = {}
             )
         }

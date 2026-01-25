@@ -31,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import ru.lemonapes.easyprog.android.GameListener
 import ru.lemonapes.easyprog.android.GameViewModel
 import ru.lemonapes.easyprog.android.GameViewState
 import ru.lemonapes.easyprog.android.MyApplicationTheme
@@ -53,12 +54,14 @@ import ru.lemonapes.easyprog.android.ui.theme.AppShapes
 @Composable
 fun RowScope.CommandsColumn(
     viewState: GameViewState,
-    viewModel: GameViewModel,
+    listener: GameListener,
 ) {
-    val isColumnVisualHovered = viewState.isHovered
+    val isColumnVisualHovered = viewState.isCommandColumnHovered && viewState.commandItems.isEmpty()
     val isCommandExecution = viewState.isCommandExecution
 
-    val columnDragAndDropTarget = remember(viewModel) { viewModel.createColumnDragAndDropTarget() }
+    val columnDragAndDropTarget = remember(listener) {
+        createColumnDragAndDropTarget(listener)
+    }
     val borderWidth = if (isColumnVisualHovered) {
         AppDimensions.columnBorderWidthSelected
     } else {
@@ -94,7 +97,7 @@ fun RowScope.CommandsColumn(
             val listState = rememberLazyListState()
 
             LaunchedEffect(viewState.scrollToIndex) {
-                viewModel.scrollToAddedItemIndex(viewState, listState)
+                scrollToAddedItemIndex(viewState, listState, listener)
             }
 
             LazyColumn(
@@ -128,7 +131,7 @@ fun RowScope.CommandsColumn(
                                 isThisCommandExecuting = viewState.executingCommandIndex == index,
                                 isCommandExecution = isCommandExecution,
                                 text = commandText,
-                                viewModel = viewModel
+                                listener = listener
                             )
 
                             when (item) {
@@ -137,7 +140,7 @@ fun RowScope.CommandsColumn(
                                         modifier = commandRowModifier,
                                         index = index,
                                         codeItems = viewState.codeItems,
-                                        viewModel = viewModel,
+                                        listener = listener,
                                     )
                                 }
 
@@ -146,7 +149,7 @@ fun RowScope.CommandsColumn(
                                         modifier = commandRowModifier,
                                         index = index,
                                         codeItems = viewState.codeItems,
-                                        viewModel = viewModel,
+                                        listener = listener,
                                     )
                                 }
 
@@ -170,11 +173,11 @@ fun RowScope.CommandsColumn(
                             modifier = Modifier
                                 .matchParentSize()
                         ) {
-                            val topItemDragAndDropTarget = remember(index, item) {
-                                viewModel.createTopItemDragAndDropTarget(index)
+                            val topItemDragAndDropTarget = remember(index, item,  listener) {
+                                createTopItemDragAndDropTarget(index, listener)
                             }
-                            val botItemDragAndDropTarget = remember(index, item) {
-                                viewModel.createBotItemDragAndDropTarget(index)
+                            val botItemDragAndDropTarget = remember(index, item, listener) {
+                                createBotItemDragAndDropTarget(index, listener)
                             }
                             Box(
                                 modifier = Modifier
@@ -204,22 +207,26 @@ private fun CommandsColumnPreview() {
             val viewModel = viewModel<GameViewModel>()
 
             LaunchedEffect(Unit) {
-                viewModel.addCommand(CopyValueCommand(1, 0, 1), true)
-                viewModel.addCommand(MoveValueCommand(2, 1, 2), true)
+                viewModel.onAddCommand(CopyValueCommand(1, 0, 1), true)
+                viewModel.onAddCommand(MoveValueCommand(2, 1, 2), true)
             }
 
-            val viewState by viewModel.viewState.collectAsState()
+            val viewState by viewModel.viewStateHandler.collectAsState()
             Row {
                 CommandsColumn(
                     viewState = viewState,
-                    viewModel = viewModel
+                    listener = viewModel
                 )
             }
         }
     }
 }
 
-private suspend fun GameViewModel.scrollToAddedItemIndex(viewState: GameViewState, listState: LazyListState) {
+private suspend fun scrollToAddedItemIndex(
+    viewState: GameViewState,
+    listState: LazyListState,
+    listener: GameListener
+) {
     viewState.scrollToIndex?.let { index ->
         if (index in viewState.commandItems.indices) {
             val layoutInfo = listState.layoutInfo
@@ -254,7 +261,7 @@ private suspend fun GameViewModel.scrollToAddedItemIndex(viewState: GameViewStat
                     listState.animateScrollToItem(index)
                 }
             }
-            clearScrollToIndex()
+            listener.onClearScrollToIndex()
         }
     }
 }
@@ -265,11 +272,11 @@ private fun CommandsColumnEmptyPreview() {
     MyApplicationTheme {
         Surface {
             val viewModel = viewModel<GameViewModel>()
-            val viewState by viewModel.viewState.collectAsState()
+            val viewState by viewModel.viewStateHandler.collectAsState()
             Row {
                 CommandsColumn(
                     viewState = viewState,
-                    viewModel = viewModel
+                    listener = viewModel
                 )
             }
         }

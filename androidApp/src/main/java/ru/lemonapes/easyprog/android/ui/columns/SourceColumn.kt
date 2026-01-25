@@ -25,7 +25,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import kotlinx.collections.immutable.ImmutableList
-import ru.lemonapes.easyprog.android.GameViewModel
+import ru.lemonapes.easyprog.android.GameListener
 import ru.lemonapes.easyprog.android.commands.CommandItem
 import ru.lemonapes.easyprog.android.ui.theme.AppColors
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions
@@ -34,7 +34,7 @@ import ru.lemonapes.easyprog.android.ui.theme.AppShapes
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RowScope.SourceColumn(
-    viewModel: GameViewModel,
+    listener: GameListener,
     sourceItems: ImmutableList<CommandItem>,
     isAnyCommandExecuting: Boolean,
 ) {
@@ -63,7 +63,7 @@ fun RowScope.SourceColumn(
                             Modifier.dragAndDropSource { ->
                                 detectTapGestures(
                                     onPress = { offset ->
-                                        viewModel.setDraggedCommandItem(item.mkCopy())
+                                        listener.onSetDraggedCommandItem(item.mkCopy())
                                         startTransfer(
                                             transferData = DragAndDropTransferData(
                                                 clipData = ClipData.newPlainText("new_item", text)

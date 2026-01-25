@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
-import ru.lemonapes.easyprog.android.GameViewModel
+import ru.lemonapes.easyprog.android.GameListener
 import ru.lemonapes.easyprog.android.ui.theme.AppColors
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions.dp12
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions.dp16
@@ -20,13 +20,13 @@ fun Modifier.commandRowModifier(
     isThisCommandExecuting: Boolean,
     isCommandExecution: Boolean,
     text: String,
-    viewModel: GameViewModel,
+    listener: GameListener,
 ): Modifier {
     val backgroundColor = if (isThisCommandExecuting) AppColors.CommandBackgroundExecuting else AppColors.MAIN_COLOR
 
     val dragModifier = if (!isCommandExecution) {
         this.dragAndDropSource { _ ->
-            viewModel.setDraggedCommandItem(viewModel.removeCommand(index))
+            listener.onSetDraggedCommandItem(listener.onRemoveCommand(index))
             DragAndDropTransferData(
                 ClipData.newPlainText("dragged_item", text)
             )

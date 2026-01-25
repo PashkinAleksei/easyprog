@@ -25,8 +25,8 @@ object AppColors {
     val BoxColors = listOf(
         Color(0xFFC62828),
         Color(0xFF2E7D32),
-        Color(0xFF1565C0),
-        Color(0xFF283593),
+        Color(0xFF2F75C6),
+        Color(0xFFFFFFFF),
         Color(0xFF6A1B9A),
         Color(0xFFAD1457),
         Color(0xFFF9A825),

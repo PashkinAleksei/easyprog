@@ -18,7 +18,7 @@ import androidx.compose.ui.res.stringResource
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import ru.lemonapes.easyprog.android.CodePeace
-import ru.lemonapes.easyprog.android.GameViewModel
+import ru.lemonapes.easyprog.android.GameListener
 import ru.lemonapes.easyprog.android.commands.IncValueCommand
 import ru.lemonapes.easyprog.android.commands.SingleVariableCommand
 import ru.lemonapes.easyprog.android.ui.theme.AppColors
@@ -34,7 +34,7 @@ fun SingleVariableCommand.CommandRow(
     modifier: Modifier = Modifier,
     index: Int,
     codeItems: ImmutableList<CodePeace>,
-    viewModel: GameViewModel,
+    listener: GameListener,
 ) {
     val variables = remember(codeItems) {
         codeItems.filterIsInstance<CodePeace.IntVariable>().map { it }.toImmutableList()
@@ -66,7 +66,7 @@ fun SingleVariableCommand.CommandRow(
             variables = variables,
             onVariableSelected = { variable ->
                 when (this@CommandRow) {
-                    is IncValueCommand -> viewModel.updateCommand(
+                    is IncValueCommand -> listener.onUpdateCommand(
                         index,
                         copy(target = codeItems.indexOf(variable))
                     )
