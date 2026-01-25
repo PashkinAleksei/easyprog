@@ -296,6 +296,14 @@ class GameViewModel : ViewModel() {
                 // Команда завершена
                 setExecutingCommandIndex(null)
 
+                // Проверка условия победы после каждой команды
+                if (checkVictory()) {
+                    gameRepository.markLevelCompleted(_viewState.value.levelId)
+                    showVictoryDialog()
+                    executionJob = null
+                    return@launch
+                }
+
                 //Если команда последняя, завершаем цикл
                 if (_viewState.value.commandItems.size <= commandResult.nextCommandIndex) break
 
@@ -303,19 +311,12 @@ class GameViewModel : ViewModel() {
                 currentCommandIndex = commandResult.nextCommandIndex
             }
 
-            // Проверка условия победы
-            if (checkVictory()) {
-                gameRepository.markLevelCompleted(_viewState.value.levelId)
-                showVictoryDialog()
-            } else {
-                showTryAgainDialog()
-            }
-
+            showTryAgainDialog()
             executionJob = null
         }
     }
 
-    fun stopExecution() {
+    fun abortExecution() {
         executionJob?.cancel()
         executionJob = null
         setExecutingCommandIndex(null)

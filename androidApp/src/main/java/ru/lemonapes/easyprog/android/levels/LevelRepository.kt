@@ -30,7 +30,6 @@ object LevelRepository {
                 ),
                 availableCommands = persistentListOf(
                     CopyValueCommand(),
-                    GotoCommand(type = PairCommand.PairType.FIRST, pairId = 0, colorIndex = 0),
                 ),
                 victoryCondition = VictoryCondition.VariableEquals(index = 1, expectedValue = 5),
             )
@@ -99,24 +98,6 @@ object LevelRepository {
         Pair(
             5, LevelConfig(
                 id = 5,
-                title = "Сортировка",
-                description = "Расположи значения по возрастанию: меньшее значение должно быть в первой переменной",
-                codeItems = persistentListOf(
-                    CodePeace.IntVariable(id = 1, value = 8, colorIndex = 0),
-                    CodePeace.IntVariable(id = 2, value = 3, colorIndex = 1),
-                    CodePeace.IntVariable(id = 3, value = null, colorIndex = 2),
-                ),
-                availableCommands = persistentListOf(
-                    MoveValueCommand(),
-                    CopyValueCommand(),
-                ),
-                victoryCondition = VictoryCondition.VariablesSortedAscending(0, 1),
-            )
-        ),
-
-        Pair(
-            6, LevelConfig(
-                id = 6,
                 title = "Замена",
                 description = "Перемести значение из второй переменной в первую. Вторая должна остаться пустой",
                 codeItems = persistentListOf(
@@ -130,6 +111,25 @@ object LevelRepository {
                     VictoryCondition.VariableEquals(index = 0, expectedValue = 20),
                     VictoryCondition.VariableIsNull(index = 1),
                 ),
+            )
+        ),
+
+        Pair(
+            6, LevelConfig(
+                id = 6,
+                title = "Сортировка",
+                description = "Расположи значения по возрастанию: меньшее значение должно быть в первой переменной",
+                codeItems = persistentListOf(
+                    CodePeace.IntVariable(id = 1, value = 3, colorIndex = 0),
+                    CodePeace.IntVariable(id = 2, value = 2, colorIndex = 1),
+                    CodePeace.IntVariable(id = 3, value = 1, colorIndex = 2),
+                    CodePeace.IntVariable(id = 4, value = null, colorIndex = 3),
+                ),
+                availableCommands = persistentListOf(
+                    MoveValueCommand(),
+                    CopyValueCommand(),
+                ),
+                victoryCondition = VictoryCondition.VariablesSortedAscending(0, 1, 2),
             )
         ),
 

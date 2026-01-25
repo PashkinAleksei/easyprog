@@ -15,6 +15,11 @@ data class GotoCommand(
     override val pairId: Long,
     val colorIndex: Int,
 ) : PairCommand {
+
+    companion object{
+        val EMPTY = GotoCommand(type = PairCommand.PairType.FIRST, pairId = 0, colorIndex = 0)
+    }
+
     @StringRes
     override val textRes: Int = when (type) {
         PairCommand.PairType.FIRST -> R.string.command_goto_start
