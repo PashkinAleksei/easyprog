@@ -20,6 +20,7 @@ import kotlinx.collections.immutable.toImmutableList
 import ru.lemonapes.easyprog.android.CodePeace
 import ru.lemonapes.easyprog.android.GameListener
 import ru.lemonapes.easyprog.android.commands.IncValueCommand
+import ru.lemonapes.easyprog.android.commands.JumpIfZeroCommand
 import ru.lemonapes.easyprog.android.commands.SingleVariableCommand
 import ru.lemonapes.easyprog.android.ui.theme.AppColors
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions
@@ -67,6 +68,10 @@ fun SingleVariableCommand.CommandRow(
             onVariableSelected = { variable ->
                 when (this@CommandRow) {
                     is IncValueCommand -> listener.onUpdateCommand(
+                        index,
+                        copy(target = codeItems.indexOf(variable))
+                    )
+                    is JumpIfZeroCommand -> listener.onUpdateCommand(
                         index,
                         copy(target = codeItems.indexOf(variable))
                     )

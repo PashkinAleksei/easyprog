@@ -11,6 +11,7 @@ import ru.lemonapes.easyprog.android.CodePeace
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
 import ru.lemonapes.easyprog.android.commands.GotoCommand
 import ru.lemonapes.easyprog.android.commands.IncValueCommand
+import ru.lemonapes.easyprog.android.commands.JumpIfZeroCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 import ru.lemonapes.easyprog.android.commands.PairCommand
 
@@ -359,6 +360,7 @@ object LevelRepository {
                 ),
                 availableCommands = persistentListOf(
                     IncValueCommand(),
+                    JumpIfZeroCommand.INITIAL,
                     CopyValueCommand(),
                 ),
                 victoryCondition = VictoryCondition.All(

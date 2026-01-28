@@ -9,6 +9,7 @@ import ru.lemonapes.easyprog.android.commands.CommandItem
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
 import ru.lemonapes.easyprog.android.commands.GotoCommand
 import ru.lemonapes.easyprog.android.commands.IncValueCommand
+import ru.lemonapes.easyprog.android.commands.JumpIfZeroCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 import ru.lemonapes.easyprog.android.commands.PairCommand
 
@@ -57,6 +58,20 @@ class GameRepository(
                     pairId = entity.sourceIndex?.toLong() ?: 0L,
                     colorIndex = entity.colorIndex,
                 )
+                COMMAND_TYPE_JUMP_IF_ZERO_START -> JumpIfZeroCommand(
+                    id = Calendar.getInstance().timeInMillis + entity.orderIndex,
+                    type = PairCommand.PairType.FIRST,
+                    pairId = entity.sourceIndex?.toLong() ?: 0L,
+                    colorIndex = entity.colorIndex,
+                    target = entity.targetIndex,
+                )
+                COMMAND_TYPE_JUMP_IF_ZERO_TARGET -> JumpIfZeroCommand(
+                    id = Calendar.getInstance().timeInMillis + entity.orderIndex,
+                    type = PairCommand.PairType.SECOND,
+                    pairId = entity.sourceIndex?.toLong() ?: 0L,
+                    colorIndex = entity.colorIndex,
+                    target = null,
+                )
                 else -> throw IllegalArgumentException("Unknown command type: ${entity.commandType}")
             }
         }.toImmutableList()
@@ -75,21 +90,28 @@ class GameRepository(
                         PairCommand.PairType.FIRST -> COMMAND_TYPE_GOTO_START
                         PairCommand.PairType.SECOND -> COMMAND_TYPE_GOTO_TARGET
                     }
+                    is JumpIfZeroCommand -> when (command.type) {
+                        PairCommand.PairType.FIRST -> COMMAND_TYPE_JUMP_IF_ZERO_START
+                        PairCommand.PairType.SECOND -> COMMAND_TYPE_JUMP_IF_ZERO_TARGET
+                    }
                 },
                 sourceIndex = when (command) {
                     is CopyValueCommand -> command.source
                     is MoveValueCommand -> command.source
                     is IncValueCommand -> null
                     is GotoCommand -> command.pairId.toInt()
+                    is JumpIfZeroCommand -> command.pairId.toInt()
                 },
                 targetIndex = when (command) {
                     is CopyValueCommand -> command.target
                     is MoveValueCommand -> command.target
                     is IncValueCommand -> command.target
                     is GotoCommand -> null
+                    is JumpIfZeroCommand -> command.target
                 },
                 colorIndex = when (command) {
                     is GotoCommand -> command.colorIndex
+                    is JumpIfZeroCommand -> command.colorIndex
                     else -> 0
                 },
             )
@@ -107,5 +129,7 @@ class GameRepository(
         private const val COMMAND_TYPE_INC = "inc"
         private const val COMMAND_TYPE_GOTO_START = "goto_start"
         private const val COMMAND_TYPE_GOTO_TARGET = "goto_target"
+        private const val COMMAND_TYPE_JUMP_IF_ZERO_START = "jump_if_zero_start"
+        private const val COMMAND_TYPE_JUMP_IF_ZERO_TARGET = "jump_if_zero_target"
     }
 }

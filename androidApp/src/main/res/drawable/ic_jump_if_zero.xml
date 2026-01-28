@@ -1,0 +1,13 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+  <path
+      android:pathData="M163,480q14,-119 104,-199.5T479,200q73,0 135,29.5T720,310v-110h80v280L520,480v-80h168q-32,-54 -86.5,-87T480,280q-88,0 -155,57t-81,143h-81Z"
+      android:fillColor="#fff"/>
+  <!-- Цифра 0 (вытянутый вертикально овал) -->
+  <path
+      android:pathData="M480,780q-40,0 -70,-50t-30,-90q0,-40 30,-90t70,-50q40,0 70,50t30,90q0,40 -30,90t-70,50ZM480,720q20,0 35,-30t15,-50q0,-20 -15,-50t-35,-30q-20,0 -35,30t-15,50q0,20 15,50t35,30Z"
+      android:fillColor="#fff"/>
+</vector>

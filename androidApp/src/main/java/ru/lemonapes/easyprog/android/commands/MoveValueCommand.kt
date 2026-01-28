@@ -43,4 +43,8 @@ data class MoveValueCommand(
             nextCommandIndex = currentCommandIndex + 1,
         )
     }
+
+    override fun validate(): Boolean {
+        return source != null && target != null
+    }
 }

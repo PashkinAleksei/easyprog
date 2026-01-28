@@ -33,6 +33,7 @@ import ru.lemonapes.easyprog.android.GameViewState
 import ru.lemonapes.easyprog.android.MyApplicationTheme
 import ru.lemonapes.easyprog.android.R
 import ru.lemonapes.easyprog.android.commands.GotoCommand
+import ru.lemonapes.easyprog.android.commands.JumpIfZeroCommand
 import ru.lemonapes.easyprog.android.commands.SingleVariableCommand
 import ru.lemonapes.easyprog.android.commands.TwoVariableCommand
 import ru.lemonapes.easyprog.android.drag_and_drop_target.createBotItemDragAndDropTarget
@@ -132,6 +133,15 @@ fun RowScope.CommandsColumn(
 
                             when (item) {
                                 is TwoVariableCommand -> {
+                                    item.CommandRow(
+                                        modifier = commandRowModifier,
+                                        index = index,
+                                        codeItems = viewState.codeItems,
+                                        listener = listener,
+                                    )
+                                }
+
+                                is JumpIfZeroCommand -> {
                                     item.CommandRow(
                                         modifier = commandRowModifier,
                                         index = index,

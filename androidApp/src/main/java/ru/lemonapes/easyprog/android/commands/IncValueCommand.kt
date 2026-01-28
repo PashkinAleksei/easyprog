@@ -41,4 +41,8 @@ data class IncValueCommand(
             nextCommandIndex = currentCommandIndex + 1,
         )
     }
+
+    override fun validate(): Boolean {
+        return target != null
+    }
 }

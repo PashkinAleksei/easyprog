@@ -13,7 +13,7 @@ data class GotoCommand(
     override val id: Long = Calendar.getInstance().timeInMillis,
     val type: PairCommand.PairType,
     override val pairId: Long,
-    val colorIndex: Int,
+    override val colorIndex: Int,
 ) : PairCommand {
 
     companion object{
@@ -43,5 +43,10 @@ data class GotoCommand(
             newCodeItems = codeItems,
             nextCommandIndex = nextCommandIndex,
         )
+    }
+
+    override fun validate(): Boolean {
+        // GotoCommand всегда валидна, так как не имеет параметров для выбора
+        return true
     }
 }

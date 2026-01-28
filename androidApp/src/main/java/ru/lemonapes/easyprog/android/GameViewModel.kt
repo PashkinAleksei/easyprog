@@ -18,8 +18,11 @@ import ru.lemonapes.easyprog.android.commands.CommandItem
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
 import ru.lemonapes.easyprog.android.commands.GotoCommand
 import ru.lemonapes.easyprog.android.commands.IncValueCommand
+import ru.lemonapes.easyprog.android.commands.JumpIfZeroCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
 import ru.lemonapes.easyprog.android.commands.PairCommand
+import ru.lemonapes.easyprog.android.commands.SingleVariableCommand
+import ru.lemonapes.easyprog.android.commands.TwoVariableCommand
 import ru.lemonapes.easyprog.android.data.GameRepository
 import ru.lemonapes.easyprog.android.drag_and_drop_target.label
 import ru.lemonapes.easyprog.android.levels.LevelConfig
@@ -145,7 +148,7 @@ class GameViewModel : ViewModel(), GameListener {
             } ?: false
         } else false
         _viewStateHandler.update { viewState ->
-            viewState.copy(itemIndexHovered = null, draggedCommandItem = null, isCommandColumnHovered=false)
+            viewState.copy(itemIndexHovered = null, draggedCommandItem = null, isCommandColumnHovered = false)
         }
         return addingResult
     }
@@ -167,7 +170,33 @@ class GameViewModel : ViewModel(), GameListener {
                                 }
 
                                 val pairId = Calendar.getInstance().timeInMillis
-                                val colorIndex = findFirstAvailableColorIndex(it.commandItems)
+                                val colorIndex = findFirstAvailableColorIndexForGoto(it.commandItems)
+                                val startCommand = command.copy(
+                                    pairId = pairId,
+                                    colorIndex = colorIndex
+                                )
+                                val targetCommand = GotoCommand(
+                                    type = PairCommand.PairType.SECOND,
+                                    pairId = pairId,
+                                    colorIndex = colorIndex
+                                )
+                                val newList = (it.commandItems + startCommand + targetCommand).toImmutableList()
+                                it.copy(
+                                    commandItems = newList,
+                                    scrollToIndex = newList.lastIndex
+                                )
+                            }
+
+                            is JumpIfZeroCommand -> {
+                                // Проверяем количество существующих GoTo команд
+                                val currentGotoCount = countGotoCommands(it.commandItems)
+                                if (currentGotoCount >= Config.MAX_GOTO_COMMANDS) {
+                                    // Если лимит достигнут, не добавляем новую команду
+                                    return false
+                                }
+
+                                val pairId = Calendar.getInstance().timeInMillis
+                                val colorIndex = findFirstAvailableJumpIfZeroColorIndex(it.commandItems)
                                 val startCommand = command.copy(
                                     pairId = pairId,
                                     colorIndex = colorIndex
@@ -211,7 +240,7 @@ class GameViewModel : ViewModel(), GameListener {
                 }
 
                 val pairId = Calendar.getInstance().timeInMillis
-                val colorIndex = findFirstAvailableColorIndex(it.commandItems)
+                val colorIndex = findFirstAvailableColorIndexForGoto(it.commandItems)
                 newList.add(index, command.copy(pairId = pairId, colorIndex = colorIndex))
                 //Важно, чтобы ID у пар был разным
                 newList.add(
@@ -220,6 +249,31 @@ class GameViewModel : ViewModel(), GameListener {
                         type = PairCommand.PairType.SECOND,
                         pairId = pairId,
                         colorIndex = colorIndex
+                    )
+                )
+                it.copy(
+                    commandItems = newList.toImmutableList(),
+                    scrollToIndex = index + 1
+                )
+            } else if (command is JumpIfZeroCommand && isNewItem) {
+                // Проверяем количество существующих JumpIfZero команд
+                val currentJumpIfZeroCount = countJumpIfZeroCommands(it.commandItems)
+                if (currentJumpIfZeroCount >= Config.MAX_GOTO_COMMANDS) {
+                    // Если лимит достигнут, не добавляем новую команду
+                    return false
+                }
+
+                val pairId = Calendar.getInstance().timeInMillis
+                val colorIndex = findFirstAvailableJumpIfZeroColorIndex(it.commandItems)
+                newList.add(index, command.copy(pairId = pairId, colorIndex = colorIndex))
+                //Важно, чтобы ID у пар был разным
+                newList.add(
+                    index + 1,
+                    JumpIfZeroCommand(
+                        type = PairCommand.PairType.SECOND,
+                        pairId = pairId,
+                        colorIndex = colorIndex,
+                        target = null // SECOND не имеет переменной
                     )
                 )
                 it.copy(
@@ -250,14 +304,10 @@ class GameViewModel : ViewModel(), GameListener {
     }
 
     fun removeCommandPair(command: PairCommand) {
-        when (command) {
-            is GotoCommand -> {
-                viewStateHandler.value.commandItems.forEachIndexed loop@{ index, found ->
-                    if (found is GotoCommand && command.pairId == found.pairId) {
-                        onRemoveCommand(index)
-                        return@loop
-                    }
-                }
+        viewStateHandler.value.commandItems.forEachIndexed loop@{ index, found ->
+            if (found is PairCommand && command.pairId == found.pairId) {
+                onRemoveCommand(index)
+                return@loop
             }
         }
     }
@@ -406,15 +456,8 @@ class GameViewModel : ViewModel(), GameListener {
     }
 
     private fun validateCommands(): Boolean {
-        //TODO:перенести в сами классы как функцию
         return _viewStateHandler.value.commandItems.all { command ->
-            when (command) {
-                is CopyValueCommand -> command.source != null && command.target != null
-                is MoveValueCommand -> command.source != null && command.target != null
-                is IncValueCommand -> command.target != null
-                is GotoCommand -> true // Goto команды не требуют параметров
-                else -> false
-            }
+            command.validate()
         }
     }
 
@@ -465,14 +508,54 @@ class GameViewModel : ViewModel(), GameListener {
     }
 
     /**
-     * Находит первый незанятый индекс цвета для новой GoTo команды.
+     * Подсчитывает количество уникальных JumpIfZero команд (пар) в списке команд.
+     * Каждая пара JumpIfZero команд считается как одна команда.
+     */
+    private fun countJumpIfZeroCommands(commands: ImmutableList<CommandItem>): Int {
+        val uniquePairIds = mutableSetOf<Long>()
+        commands.forEach { command ->
+            if (command is JumpIfZeroCommand) {
+                uniquePairIds.add(command.pairId)
+            }
+        }
+        return uniquePairIds.size
+    }
+
+    /**
+     * Находит первый незанятый индекс цвета для новой GotoCommand.
      * Возвращает минимальный индекс от 0 до MAX_GOTO_COMMANDS-1, который еще не используется.
      */
-    private fun findFirstAvailableColorIndex(commands: ImmutableList<CommandItem>): Int {
+    private fun findFirstAvailableColorIndexForGoto(commands: ImmutableList<CommandItem>): Int {
+        return findFirstAvailableColorIndex(commands, GotoCommand::class.java)
+    }
+
+    /**
+     * Находит первый незанятый индекс цвета для новой JumpIfZeroCommand.
+     * Возвращает минимальный индекс от 0 до MAX_GOTO_COMMANDS-1, который еще не используется.
+     */
+    private fun findFirstAvailableJumpIfZeroColorIndex(commands: ImmutableList<CommandItem>): Int {
+        return findFirstAvailableColorIndex(commands, JumpIfZeroCommand::class.java)
+    }
+
+    /**
+     * Базовый метод для поиска первого незанятого индекса цвета для парных команд.
+     * Учитывает только команды указанного типа.
+     *
+     * @param commands список всех команд
+     * @param commandType класс команды, цветовые индексы которой нужно учитывать
+     * @return минимальный свободный индекс от 0 до MAX_GOTO_COMMANDS-1
+     */
+    private fun <T : PairCommand> findFirstAvailableColorIndex(
+        commands: ImmutableList<CommandItem>,
+        commandType: Class<T>,
+    ): Int {
         val usedColorIndices = mutableSetOf<Int>()
         commands.forEach { command ->
-            if (command is GotoCommand) {
-                usedColorIndices.add(command.colorIndex)
+            if (commandType.isInstance(command)) {
+                val pairCommand = commandType.cast(command)
+                if (pairCommand != null) {
+                    usedColorIndices.add(pairCommand.colorIndex)
+                }
             }
         }
 

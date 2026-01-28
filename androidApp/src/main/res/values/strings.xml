@@ -7,6 +7,8 @@
     <string name="command_inc_text">Увеличить</string>
     <string name="command_goto_start">Метка</string>
     <string name="command_goto_target">Переход</string>
+    <string name="command_jump_if_zero_start">Если 0, то</string>
+    <string name="command_jump_if_zero_target">Сюда</string>
     <string name="from_portal">Из портала</string>
     <string name="to_portal">В портал</string>
     <string name="to">в</string>

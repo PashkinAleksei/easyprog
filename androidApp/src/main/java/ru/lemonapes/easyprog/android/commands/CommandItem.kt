@@ -17,6 +17,12 @@ sealed interface CommandItem {
         commandItems: ImmutableList<CommandItem>,
         currentCommandIndex: Int,
     ): CommandResult
+
+    /**
+     * Проверяет валидность команды.
+     * Возвращает true, если все необходимые параметры команды установлены.
+     */
+    fun validate(): Boolean
 }
 
 data class CommandResult(
