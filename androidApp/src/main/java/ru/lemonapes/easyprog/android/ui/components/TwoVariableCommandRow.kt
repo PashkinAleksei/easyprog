@@ -1,8 +1,10 @@
 package ru.lemonapes.easyprog.android.ui.components
 
+import android.icu.util.Calendar
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -15,16 +17,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import ru.lemonapes.easyprog.android.CodePeace
 import ru.lemonapes.easyprog.android.GameListener
+import ru.lemonapes.easyprog.android.MyApplicationTheme
 import ru.lemonapes.easyprog.android.R
 import ru.lemonapes.easyprog.android.commands.CopyValueCommand
+import ru.lemonapes.easyprog.android.commands.JumpIfZeroCommand
 import ru.lemonapes.easyprog.android.commands.MoveValueCommand
+import ru.lemonapes.easyprog.android.commands.PairCommand
 import ru.lemonapes.easyprog.android.commands.TwoVariableCommand
+import ru.lemonapes.easyprog.android.preview.PreviewGameListener
 import ru.lemonapes.easyprog.android.ui.theme.AppColors
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions
+import ru.lemonapes.easyprog.android.ui.theme.AppDimensions.dp12
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions.dp16
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions.dp2
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions.dp4
@@ -47,7 +56,7 @@ fun TwoVariableCommand.CommandRow(
     Row(
         modifier = modifier
     ) {
-        Spacer(modifier = Modifier.width(dp16))
+        Spacer(modifier = Modifier.width(dp8))
         when (this@CommandRow) {
             is CopyValueCommand, is MoveValueCommand ->
                 Box(
@@ -66,7 +75,7 @@ fun TwoVariableCommand.CommandRow(
                     }
                 }
         }
-        Spacer(modifier = Modifier.width(dp20))
+        Spacer(modifier = Modifier.width(dp12))
 
         IntVariableDropdownBox(
             selectedIndex = source,
@@ -118,5 +127,41 @@ fun TwoVariableCommand.CommandRow(
         )
 
         Spacer(modifier = Modifier.weight(0.7f))
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+private fun TwoVariableCommandRowPreview() {
+    val codeItems = persistentListOf(
+        CodePeace.IntVariable(
+            id = Calendar.getInstance().timeInMillis,
+            value = 0,
+            isMutable = true,
+            colorIndex = 0,
+        ),
+        CodePeace.IntVariable(
+            id = Calendar.getInstance().timeInMillis + 1,
+            value = 5,
+            isMutable = true,
+            colorIndex = 1,
+        )
+    )
+
+    val commandFirst = CopyValueCommand(
+        id = Calendar.getInstance().timeInMillis + 2,
+        target = 0
+    )
+
+    MyApplicationTheme {
+        Column {
+            commandFirst.CommandRow(
+                modifier = Modifier.padding(vertical = AppDimensions.dp8),
+                index = 0,
+                codeItems = codeItems,
+                listener = PreviewGameListener()
+            )
+        }
     }
 }

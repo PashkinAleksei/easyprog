@@ -24,6 +24,7 @@ import ru.lemonapes.easyprog.android.commands.JumpIfZeroCommand
 import ru.lemonapes.easyprog.android.commands.SingleVariableCommand
 import ru.lemonapes.easyprog.android.ui.theme.AppColors
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions
+import ru.lemonapes.easyprog.android.ui.theme.AppDimensions.dp12
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions.dp4
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions.dp8
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions.dp16
@@ -44,7 +45,7 @@ fun SingleVariableCommand.CommandRow(
     Row(
         modifier = modifier
     ) {
-        Spacer(modifier = Modifier.width(dp16))
+        Spacer(modifier = Modifier.width(dp8))
         Box(
             modifier = Modifier
                 .clip(AppShapes.CORNER_MEDIUM)
@@ -59,7 +60,7 @@ fun SingleVariableCommand.CommandRow(
                 )
             }
         }
-        Spacer(modifier = Modifier.width(dp20))
+        Spacer(modifier = Modifier.width(dp12))
 
         IntVariableDropdownBox(
             selectedIndex = target,

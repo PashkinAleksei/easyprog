@@ -361,6 +361,7 @@ object LevelRepository {
                 availableCommands = persistentListOf(
                     IncValueCommand(),
                     JumpIfZeroCommand.INITIAL,
+                    GotoCommand.INITIAL,
                     CopyValueCommand(),
                 ),
                 victoryCondition = VictoryCondition.All(

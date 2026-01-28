@@ -12,6 +12,7 @@ import ru.lemonapes.easyprog.android.GameListener
 import ru.lemonapes.easyprog.android.ui.theme.AppColors
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions.dp12
 import ru.lemonapes.easyprog.android.ui.theme.AppDimensions.dp16
+import ru.lemonapes.easyprog.android.ui.theme.AppDimensions.dp8
 import ru.lemonapes.easyprog.android.ui.theme.AppShapes
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -42,5 +43,5 @@ fun Modifier.commandRowModifier(
             color = backgroundColor,
             shape = AppShapes.CORNER_MEDIUM
         )
-        .padding(dp12)
+        .padding(vertical = dp12, horizontal = dp8)
 }
